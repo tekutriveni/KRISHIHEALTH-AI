@@ -16,9 +16,16 @@ export function useVoice(language: Language) {
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Speech recognition not supported in this browser.");
+      alert("Voice input is not supported in this browser. Please use Google Chrome.");
       return;
     }
+
+    // Request mic permission first
+    navigator.mediaDevices?.getUserMedia({ audio: true }).catch(() => {
+      alert("Microphone access denied. Please allow microphone access and try again.");
+      return;
+    });
+
     const recognition = new SpeechRecognition();
     recognition.lang = LANG_CODES[language];
     recognition.interimResults = false;
@@ -28,11 +35,24 @@ export function useVoice(language: Language) {
       onResult(transcript);
       setIsListening(false);
     };
-    recognition.onerror = () => setIsListening(false);
+    recognition.onerror = (e: any) => {
+      console.error("Speech recognition error:", e.error);
+      if (e.error === "not-allowed") {
+        alert("Microphone access denied. Please allow microphone permission in your browser settings.");
+      } else if (e.error === "network") {
+        alert("Network error during voice recognition. Please check your connection.");
+      }
+      setIsListening(false);
+    };
     recognition.onend = () => setIsListening(false);
     recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
+    try {
+      recognition.start();
+      setIsListening(true);
+    } catch (err) {
+      console.error("Failed to start recognition:", err);
+      setIsListening(false);
+    }
   }, [language]);
 
   const stopListening = useCallback(() => {

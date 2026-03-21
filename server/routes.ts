@@ -238,6 +238,14 @@ Return ONLY JSON array, no markdown.` }]
   });
 
   // --- SMS ALERTS ---
+  app.get("/api/sms/status", (_req, res) => {
+    const sid = process.env.TWILIO_ACCOUNT_SID;
+    const token = process.env.TWILIO_AUTH_TOKEN;
+    const phone = process.env.TWILIO_PHONE_NUMBER;
+    const configured = !!(sid && token && phone && sid.startsWith("AC"));
+    res.json({ configured, reason: !configured ? (sid && !sid.startsWith("AC") ? "TWILIO_ACCOUNT_SID must start with 'AC'. Please update the secret with your correct Twilio Account SID." : "Twilio credentials not set.") : null });
+  });
+
   app.post("/api/sms/send", async (req, res) => {
     try {
       const { phoneNumber, message, type } = req.body;

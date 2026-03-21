@@ -44,11 +44,8 @@ export default function Chat({ language }: ChatProps) {
 
   const chatMutation = useMutation({
     mutationFn: async (message: string) => {
-      const res = await apiRequest("/api/ai-chat", {
-        method: "POST",
-        body: JSON.stringify({ message, language }),
-      });
-      return res as { reply: string };
+      const res = await apiRequest("POST", "/api/ai-chat", { message, language });
+      return res.json() as Promise<{ reply: string }>;
     },
     onSuccess: (data) => {
       const aiMsg: Message = {

@@ -74,10 +74,8 @@ export default function Disease({ language }: DiseaseProps) {
     mutationFn: async () => {
       const phones = neighborPhones.split(",").map((p) => p.trim()).filter(Boolean);
       const message = `KrishiHealth Alert: ${result?.diseaseName} detected (${result?.severity}). ${result?.solution?.slice(0, 100)}...`;
-      return apiRequest("/api/sms/send-group", {
-        method: "POST",
-        body: JSON.stringify({ phoneNumbers: phones, message, type: "disease" }),
-      });
+      const res = await apiRequest("POST", "/api/sms/send-group", { phoneNumbers: phones, message, type: "disease" });
+      return res.json();
     },
     onSuccess: () => {
       toast({ title: "SMS Sent!", description: "Neighbors have been alerted." });

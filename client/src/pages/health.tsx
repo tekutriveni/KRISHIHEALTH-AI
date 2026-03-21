@@ -74,14 +74,12 @@ export default function Health({ language }: HealthProps) {
       questions.forEach((q) => {
         answersPayload[q.question] = answers[q.key] || "";
       });
-      return apiRequest("/api/health-checkin", {
-        method: "POST",
-        body: JSON.stringify({
-          sessionType: session.type,
-          language,
-          answers: answersPayload,
-        }),
+      const res = await apiRequest("POST", "/api/health-checkin", {
+        sessionType: session.type,
+        language,
+        answers: answersPayload,
       });
+      return res.json();
     },
     onSuccess: (data) => {
       setResult(data);

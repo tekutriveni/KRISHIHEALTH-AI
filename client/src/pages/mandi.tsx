@@ -29,11 +29,10 @@ export default function Mandi({ language }: MandiProps) {
   });
 
   const refreshMutation = useMutation({
-    mutationFn: () =>
-      apiRequest("/api/mandi-prices/refresh", {
-        method: "POST",
-        body: JSON.stringify({ language }),
-      }),
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/mandi-prices/refresh", { language });
+      return res.json();
+    },
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/mandi-prices"], data);
       toast({ title: language === "te" ? "ధరలు నవీకరించబడ్డాయి" : language === "hi" ? "भाव अपडेट हुए" : "Prices updated!" });

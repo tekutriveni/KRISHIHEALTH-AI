@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, Send, CheckCircle2, XCircle, Mic, MicOff } from "lucide-react";
+import { Bell, Send, CheckCircle2, XCircle, Mic, MicOff, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,12 +33,15 @@ export default function Alerts({ language }: AlertsProps) {
     queryKey: ["/api/sms-alerts"],
   });
 
+  const { data: smsStatus } = useQuery<{ configured: boolean; reason: string | null }>({
+    queryKey: ["/api/sms/status"],
+  });
+
   const sendMutation = useMutation({
-    mutationFn: () =>
-      apiRequest("/api/sms/send", {
-        method: "POST",
-        body: JSON.stringify({ phoneNumber: phone, message, type: alertType }),
-      }),
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/sms/send", { phoneNumber: phone, message, type: alertType });
+      return res.json();
+    },
     onSuccess: () => {
       toast({
         title: language === "te" ? "SMS పంపబడింది!" : language === "hi" ? "SMS भेजा गया!" : "SMS Sent!",
@@ -92,6 +95,19 @@ export default function Alerts({ language }: AlertsProps) {
         <Bell className="text-primary" size={22} />
         <h2 className="text-xl font-bold">{tx.smsAlerts}</h2>
       </div>
+
+      {/* Twilio not configured warning */}
+      {smsStatus && !smsStatus.configured && (
+        <div className="flex gap-3 items-start bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-300 dark:border-yellow-800 rounded-xl p-3">
+          <AlertTriangle className="text-yellow-500 shrink-0 mt-0.5" size={18} />
+          <div>
+            <p className="text-sm font-semibold text-yellow-700 dark:text-yellow-300">SMS Not Configured</p>
+            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-0.5">
+              {smsStatus.reason || "Please set your Twilio credentials in Secrets (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER)."}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Send Alert Form */}
       <Card>
