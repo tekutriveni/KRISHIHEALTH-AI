@@ -1,0 +1,78 @@
+Upgrade the Health Check-in feature with 
+more detailed and smart questions for farmers:
+
+MORNING CHECK (7 AM) - 6 questions:
+1. Did you sleep well last night? 
+   (నిన్న రాత్రి నిద్ర బాగా పట్టిందా?)
+2. Do you feel tired or energetic today?
+   (ఈ రోజు అలసటగా ఉందా లేదా ఉత్సాహంగా ఉందా?)
+3. Did you eat proper breakfast today?
+   (ఈ రోజు అల్పాహారం సరిగ్గా తిన్నారా?)
+4. Do you have any body pain today?
+   (ఈ రోజు శరీరంలో ఏదైనా నొప్పిగా ఉందా?)
+5. What is your stress level today 1 to 10?
+   (ఈ రోజు మీ మానసిక ఒత్తిడి 1 నుండి 10 లో ఎంత?)
+6. Are your family members healthy?
+   (మీ కుటుంబ సభ్యులు అందరూ ఆరోగ్యంగా ఉన్నారా?)
+
+FIELD WORK CHECK (12 PM) - 6 questions:
+1. Did you drink enough water today?
+   (ఈ రోజు తగినంత నీళ్ళు తాగారా?)
+2. Do you feel dizzy or have headache?
+   (తల తిరుగుతుందా లేదా తలనొప్పి ఉందా?)
+3. Did you spray pesticides today?
+   (ఈ రోజు పురుగుమందు పిచికారీ చేశారా?)
+4. If yes - did you wear mask and gloves?
+   (అవును అంటే - మాస్క్ మరియు గ్లౌజులు వేసుకున్నారా?)
+5. How many hours did you work in sun today?
+   (ఈ రోజు ఎండలో ఎన్ని గంటలు పని చేశారు?)
+6. Do you feel chest pain or breathing problem?
+   (గుండె నొప్పి లేదా శ్వాస తీసుకోవడంలో ఇబ్బందిగా ఉందా?)
+
+EVENING CHECK (6 PM) - 6 questions:
+1. How was your energy level today overall?
+   (ఈ రోజు మొత్తం మీద శక్తి స్థాయి ఎలా ఉంది?)
+2. Did you eat proper lunch and dinner?
+   (మధ్యాహ్నం మరియు రాత్రి భోజనం సరిగ్గా చేశారా?)
+3. Any skin irritation or eye problem today?
+   (చర్మం మంటగా ఉందా లేదా కళ్ళు మండుతున్నాయా?)
+4. How is your crop looking today?
+   (ఈ రోజు మీ పంట ఎలా ఉంది?)
+5. Did you feel mentally stressed today?
+   (ఈ రోజు మానసికంగా ఒత్తిడిగా అనిపించిందా?)
+6. Do you need to see a doctor?
+   (డాక్టర్ దగ్గరకు వెళ్ళాల్సిన అవసరం ఉందా?)
+
+WEEKLY CHECK (Sunday) - 5 special questions:
+1. Did you earn enough money this week?
+   (ఈ వారం తగినంత ఆదాయం వచ్చిందా?)
+2. Do you have any loan stress this week?
+   (ఈ వారం అప్పుల ఒత్తిడి ఉందా?)
+3. Did you visit doctor this month?
+   (ఈ నెలలో డాక్టర్ దగ్గరకు వెళ్ళారా?)
+4. Are your children going to school?
+   (మీ పిల్లలు పాఠశాలకు వెళ్తున్నారా?)
+5. Do you feel hopeful about your farming?
+   (మీ వ్యవసాయం గురించి ఆశగా అనిపిస్తుందా?)
+
+AI RESPONSE SYSTEM:
+- GREEN status: All answers positive - 
+  "మీరు చాలా బాగున్నారు! రేపు కూడా జాగ్రత్తగా ఉండండి"
+  
+- YELLOW status: Some concerns - 
+  "కొంచెం జాగ్రత్త అవసరం - ఈ చిట్కాలు పాటించండి"
+  Give specific tips based on answers
+  
+- RED status: Serious concerns -
+  "వెంటనే దగ్గరలో PHC కి వెళ్ళండి"
+  Show nearest PHC location
+  Show emergency number 104
+
+- CRITICAL status: Emergency answers -
+  "అత్యవసరం! 108 కి call చేయండి"
+  Auto send SMS to family member
+
+All questions in Telugu, Hindi, English.
+All via voice and chat both options.
+Save all answers to database for health history.
+Show weekly health trend graph.
