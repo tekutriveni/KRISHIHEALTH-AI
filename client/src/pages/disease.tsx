@@ -1,6 +1,17 @@
 import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Camera, Upload, Mic, MicOff, Volume2, VolumeX, Send, AlertTriangle, Leaf, Users } from "lucide-react";
+import {
+  Camera,
+  Upload,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Send,
+  AlertTriangle,
+  Leaf,
+  Users,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +42,14 @@ export default function Disease({ language }: DiseaseProps) {
   const tx = useTranslation(language);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isListening, isSpeaking, startListening, stopListening, speak, stopSpeaking } = useVoice(language);
+  const {
+    isListening,
+    isSpeaking,
+    startListening,
+    stopListening,
+    speak,
+    stopSpeaking,
+  } = useVoice(language);
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -66,24 +84,42 @@ export default function Disease({ language }: DiseaseProps) {
       }
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to analyze. Please try again.", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to analyze. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
   const smsMutation = useMutation({
     mutationFn: async () => {
-      const phones = neighborPhones.split(",").map((p) => p.trim()).filter(Boolean);
+      const phones = neighborPhones
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
       const message = `KrishiHealth Alert: ${result?.diseaseName} detected (${result?.severity}). ${result?.solution?.slice(0, 100)}...`;
-      const res = await apiRequest("POST", "/api/sms/send-group", { phoneNumbers: phones, message, type: "disease" });
+      const res = await apiRequest("POST", "/api/sms/send-group", {
+        phoneNumbers: phones,
+        message,
+        type: "disease",
+      });
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: "SMS Sent!", description: "Neighbors have been alerted." });
+      toast({
+        title: "SMS Sent!",
+        description: "Neighbors have been alerted.",
+      });
       setShowNeighborForm(false);
       setNeighborPhones("");
     },
     onError: () => {
-      toast({ title: "SMS Failed", description: "Could not send alerts.", variant: "destructive" });
+      toast({
+        title: "SMS Failed",
+        description: "Could not send alerts.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -114,8 +150,10 @@ export default function Disease({ language }: DiseaseProps) {
 
   const severityColor = {
     mild: "border-green-400 text-green-700 bg-green-50 dark:bg-green-950/30 dark:text-green-300",
-    moderate: "border-yellow-400 text-yellow-700 bg-yellow-50 dark:bg-yellow-950/30 dark:text-yellow-300",
-    severe: "border-red-400 text-red-700 bg-red-50 dark:bg-red-950/30 dark:text-red-300",
+    moderate:
+      "border-yellow-400 text-yellow-700 bg-yellow-50 dark:bg-yellow-950/30 dark:text-yellow-300",
+    severe:
+      "border-red-400 text-red-700 bg-red-50 dark:bg-red-950/30 dark:text-red-300",
   };
 
   return (
@@ -140,7 +178,11 @@ export default function Disease({ language }: DiseaseProps) {
                 variant="outline"
                 size="sm"
                 className="absolute top-2 right-2"
-                onClick={() => { setImagePreview(null); setSelectedImage(null); setResult(null); }}
+                onClick={() => {
+                  setImagePreview(null);
+                  setSelectedImage(null);
+                  setResult(null);
+                }}
               >
                 ✕
               </Button>
@@ -175,7 +217,9 @@ export default function Disease({ language }: DiseaseProps) {
             ref={fileInputRef}
             className="hidden"
             accept="image/*"
-            onChange={(e) => e.target.files?.[0] && handleImageSelect(e.target.files[0])}
+            onChange={(e) =>
+              e.target.files?.[0] && handleImageSelect(e.target.files[0])
+            }
           />
           <input
             type="file"
@@ -183,7 +227,9 @@ export default function Disease({ language }: DiseaseProps) {
             className="hidden"
             accept="image/*"
             capture="environment"
-            onChange={(e) => e.target.files?.[0] && handleImageSelect(e.target.files[0])}
+            onChange={(e) =>
+              e.target.files?.[0] && handleImageSelect(e.target.files[0])
+            }
           />
 
           {/* Text input */}
@@ -204,7 +250,11 @@ export default function Disease({ language }: DiseaseProps) {
                 onClick={handleVoiceInput}
                 data-testid="button-voice-input"
               >
-                {isListening ? <MicOff size={18} className="text-red-500" /> : <Mic size={18} />}
+                {isListening ? (
+                  <MicOff size={18} className="text-red-500" />
+                ) : (
+                  <Mic size={18} />
+                )}
               </Button>
             </div>
           </div>
@@ -212,7 +262,9 @@ export default function Disease({ language }: DiseaseProps) {
           <Button
             className="w-full farmer-btn"
             onClick={() => analyzeMutation.mutate()}
-            disabled={analyzeMutation.isPending || (!selectedImage && !cropName.trim())}
+            disabled={
+              analyzeMutation.isPending || (!selectedImage && !cropName.trim())
+            }
             data-testid="button-analyze"
           >
             {analyzeMutation.isPending ? (
@@ -247,7 +299,12 @@ export default function Disease({ language }: DiseaseProps) {
                 >
                   {result.severity}
                 </Badge>
-                <Button variant="ghost" size="icon" onClick={speakResult} data-testid="button-speak-result">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={speakResult}
+                  data-testid="button-speak-result"
+                >
                   {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
                 </Button>
               </div>
@@ -257,30 +314,44 @@ export default function Disease({ language }: DiseaseProps) {
             {/* Medicine */}
             {result.medicineName && (
               <div className="bg-primary/10 rounded-lg p-3">
-                <p className="text-xs font-semibold text-primary uppercase mb-1">{tx.medicine}</p>
+                <p className="text-xs font-semibold text-primary uppercase mb-1">
+                  {tx.medicine}
+                </p>
                 <p className="text-sm font-medium">{result.medicineName}</p>
               </div>
             )}
 
             {/* Solution */}
             <div>
-              <p className="text-xs font-semibold uppercase mb-1 text-muted-foreground">{tx.solution}</p>
+              <p className="text-xs font-semibold uppercase mb-1 text-muted-foreground">
+                {tx.solution}
+              </p>
               <p className="text-sm leading-relaxed">{result.solution}</p>
             </div>
 
             {/* Action Plan */}
             {result.actionPlan && (
               <div>
-                <p className="text-xs font-semibold uppercase mb-2 text-muted-foreground">{tx.actionPlan}</p>
+                <p className="text-xs font-semibold uppercase mb-2 text-muted-foreground">
+                  {tx.actionPlan}
+                </p>
                 <div className="space-y-2">
-                  {result.actionPlan.split("\n").filter(Boolean).map((line, i) => (
-                    <div key={i} className="flex gap-2 items-start bg-muted/40 rounded-lg p-2">
-                      <span className="text-primary font-bold text-xs mt-0.5 shrink-0">
-                        {i === 0 ? "0-6h" : i === 1 ? "6-24h" : "24-48h"}
-                      </span>
-                      <span className="text-xs">{line.replace(/^Hour \d+-\d+:\s*/, "")}</span>
-                    </div>
-                  ))}
+                  {result.actionPlan
+                    .split("\n")
+                    .filter(Boolean)
+                    .map((line, i) => (
+                      <div
+                        key={i}
+                        className="flex gap-2 items-start bg-muted/40 rounded-lg p-2"
+                      >
+                        <span className="text-primary font-bold text-xs mt-0.5 shrink-0">
+                          {i === 0 ? "0-6h" : i === 1 ? "6-24h" : "24-48h"}
+                        </span>
+                        <span className="text-xs">
+                          {line.replace(/^Hour \d+-\d+:\s*/, "")}
+                        </span>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -288,10 +359,39 @@ export default function Disease({ language }: DiseaseProps) {
             {/* Spread Info */}
             {result.spreadInfo && (
               <div>
-                <p className="text-xs font-semibold uppercase mb-1 text-muted-foreground">{tx.spreadInfo}</p>
-                <p className="text-sm leading-relaxed text-muted-foreground">{result.spreadInfo}</p>
+                <p className="text-xs font-semibold uppercase mb-1 text-muted-foreground">
+                  {tx.spreadInfo}
+                </p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {result.spreadInfo}
+                </p>
               </div>
             )}
+            {/* WhatsApp Share */}
+            <Button
+              variant="outline"
+              className="w-full mt-3 border-green-500 text-green-700 hover:bg-green-50"
+              onClick={() => {
+                const msg =
+                  `🌾 *KrishiHealth AI Alert!*\n\n` +
+                  `🦠 *Disease:* ${result.diseaseName}\n` +
+                  `⚠️ *Severity:* ${result.severity}\n` +
+                  `💊 *Medicine:* ${result.medicineName || "N/A"}\n\n` +
+                  `✅ *Solution:*\n${result.solution?.slice(0, 200)}\n\n` +
+                  `⏰ *Action Plan:*\n${result.actionPlan}\n\n` +
+                  `🤖 Powered by KrishiHealth AI`;
+
+                const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+                window.open(waUrl, "_blank");
+              }}
+            >
+              📤{" "}
+              {language === "te"
+                ? "WhatsApp లో Share చేయండి"
+                : language === "hi"
+                  ? "WhatsApp पर Share करें"
+                  : "Share on WhatsApp"}
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -323,7 +423,10 @@ export default function Disease({ language }: DiseaseProps) {
                 <Send size={16} className="mr-2" />
                 {smsMutation.isPending ? tx.sending : tx.sendSMS}
               </Button>
-              <Button variant="outline" onClick={() => setShowNeighborForm(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowNeighborForm(false)}
+              >
                 ✕
               </Button>
             </div>

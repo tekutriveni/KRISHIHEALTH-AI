@@ -1,9 +1,18 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { HeartPulse, Mic, MicOff, Volume2, VolumeX, CheckCircle2, AlertTriangle, XCircle, ChevronRight, ChevronLeft } from "lucide-react";
+import {
+  HeartPulse,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  ChevronLeft,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/language";
 import { useVoice } from "@/hooks/useVoice";
@@ -14,70 +23,487 @@ interface HealthProps {
   language: Language;
 }
 
-const HEALTH_QUESTIONS = {
+const MORNING_QUESTIONS = {
   en: [
-    { key: "fever", question: "Do you have fever or body temperature above 99°F?", options: ["Yes", "No", "Not sure"] },
-    { key: "headache", question: "Do you have headache or dizziness?", options: ["Yes, severe", "Yes, mild", "No"] },
-    { key: "fatigue", question: "Are you feeling extreme fatigue or weakness?", options: ["Yes, can't work", "Yes, but manageable", "No"] },
-    { key: "water", question: "Have you drunk enough water today? (At least 3 liters)", options: ["Yes", "No", "I forget to drink"] },
-    { key: "food", question: "Did you eat properly today?", options: ["Yes, 3 meals", "Only 1-2 meals", "No"] },
-    { key: "pain", question: "Do you have any body pain (back, joints, chest)?", options: ["Yes, chest pain", "Yes, back/joints", "No pain"] },
-    { key: "skin", question: "Any skin rashes, itching or wounds from farming?", options: ["Yes, needs treatment", "Minor cuts", "No"] },
-    { key: "vision", question: "Any vision problems or eye irritation?", options: ["Yes", "Mild", "No"] },
+    {
+      key: "sleep",
+      question: "Did you sleep well last night?",
+      options: ["Yes, very well", "Ok, average", "No, poor sleep"],
+    },
+    {
+      key: "energy",
+      question: "Do you feel tired or energetic today?",
+      options: ["Very energetic", "Normal", "Very tired"],
+    },
+    {
+      key: "breakfast",
+      question: "Did you eat proper breakfast today?",
+      options: ["Yes, full breakfast", "Light snack only", "No breakfast"],
+    },
+    {
+      key: "pain",
+      question: "Do you have any body pain today?",
+      options: ["No pain", "Yes, mild", "Yes, severe"],
+    },
+    {
+      key: "stress",
+      question: "What is your stress level today? (1=low, 10=high)",
+      options: ["1-3 Low", "4-6 Medium", "7-10 High"],
+    },
+    {
+      key: "family",
+      question: "Are your family members healthy today?",
+      options: ["Yes, all fine", "Someone is unwell", "Need doctor"],
+    },
   ],
   te: [
-    { key: "fever", question: "మీకు జ్వరం లేదా శరీర ఉష్ణోగ్రత 99°F పైన ఉందా?", options: ["అవును", "లేదు", "తెలియదు"] },
-    { key: "headache", question: "మీకు తలనొప్పి లేదా తలతిరగడం ఉందా?", options: ["అవును, తీవ్రంగా", "అవును, కొంచెం", "లేదు"] },
-    { key: "fatigue", question: "మీరు చాలా అలసటగా లేదా బలహీనంగా అనిపిస్తోందా?", options: ["అవును, పని చేయలేను", "అవును, కానీ భరించగలను", "లేదు"] },
-    { key: "water", question: "మీరు నేడు తగినంత నీళ్ళు తాగారా? (కనీసం 3 లీటర్లు)", options: ["అవును", "లేదు", "మర్చిపోయాను"] },
-    { key: "food", question: "మీరు నేడు సరిగ్గా తిన్నారా?", options: ["అవును, 3 పూటలు", "1-2 పూటలు మాత్రమే", "తినలేదు"] },
-    { key: "pain", question: "మీకు శరీర నొప్పి ఉందా (వీపు, కీళ్ళు, ఛాతీ)?", options: ["అవును, ఛాతీ నొప్పి", "అవును, వీపు/కీళ్ళు", "నొప్పి లేదు"] },
-    { key: "skin", question: "వ్యవసాయం వల్ల చర్మంపై దద్దుర్లు లేదా గాయాలు ఉన్నాయా?", options: ["అవును, చికిత్స అవసరం", "చిన్న గాయాలు", "లేదు"] },
-    { key: "vision", question: "చూపు సమస్యలు లేదా కంటి జ్వలన ఉందా?", options: ["అవును", "కొంచెం", "లేదు"] },
+    {
+      key: "sleep",
+      question: "నిన్న రాత్రి నిద్ర బాగా పట్టిందా?",
+      options: ["అవును, చాలా బాగా", "సాధారణంగా", "లేదు, సరిగా పట్టలేదు"],
+    },
+    {
+      key: "energy",
+      question: "ఈ రోజు అలసటగా ఉందా లేదా ఉత్సాహంగా ఉందా?",
+      options: ["చాలా ఉత్సాహంగా", "సాధారణంగా", "చాలా అలసటగా"],
+    },
+    {
+      key: "breakfast",
+      question: "ఈ రోజు అల్పాహారం సరిగ్గా తిన్నారా?",
+      options: ["అవును, పూర్తిగా", "కొంచెం మాత్రమే", "తినలేదు"],
+    },
+    {
+      key: "pain",
+      question: "ఈ రోజు శరీరంలో ఏదైనా నొప్పిగా ఉందా?",
+      options: ["నొప్పి లేదు", "అవును, కొంచెం", "అవును, చాలా"],
+    },
+    {
+      key: "stress",
+      question: "ఈ రోజు మీ మానసిక ఒత్తిడి 1 నుండి 10 లో ఎంత?",
+      options: ["1-3 తక్కువ", "4-6 మధ్యస్థం", "7-10 ఎక్కువ"],
+    },
+    {
+      key: "family",
+      question: "మీ కుటుంబ సభ్యులు అందరూ ఆరోగ్యంగా ఉన్నారా?",
+      options: ["అవును, అందరూ బాగున్నారు", "ఒకరికి అనారోగ్యం", "డాక్టర్ అవసరం"],
+    },
   ],
   hi: [
-    { key: "fever", question: "क्या आपको बुखार या 99°F से ऊपर तापमान है?", options: ["हाँ", "नहीं", "पता नहीं"] },
-    { key: "headache", question: "क्या आपको सिरदर्द या चक्कर आ रहे हैं?", options: ["हाँ, बहुत तेज", "हाँ, थोड़ा", "नहीं"] },
-    { key: "fatigue", question: "क्या आप बहुत थका हुआ या कमज़ोर महसूस कर रहे हैं?", options: ["हाँ, काम नहीं कर सकता", "हाँ, पर ठीक है", "नहीं"] },
-    { key: "water", question: "क्या आपने आज पर्याप्त पानी पिया? (कम से कम 3 लीटर)", options: ["हाँ", "नहीं", "भूल जाता हूँ"] },
-    { key: "food", question: "क्या आपने आज ठीक से खाना खाया?", options: ["हाँ, 3 बार", "केवल 1-2 बार", "नहीं"] },
-    { key: "pain", question: "क्या आपको शरीर में दर्द है (पीठ, जोड़, छाती)?", options: ["हाँ, सीने में दर्द", "हाँ, पीठ/जोड़", "कोई दर्द नहीं"] },
-    { key: "skin", question: "खेती से त्वचा पर कोई दाने या घाव हैं?", options: ["हाँ, इलाज चाहिए", "छोटे घाव", "नहीं"] },
-    { key: "vision", question: "आँखों में कोई समस्या या जलन है?", options: ["हाँ", "थोड़ी", "नहीं"] },
+    {
+      key: "sleep",
+      question: "क्या कल रात नींद अच्छी आई?",
+      options: ["हाँ, बहुत अच्छी", "ठीक थी", "नहीं, खराब नींद"],
+    },
+    {
+      key: "energy",
+      question: "क्या आज थका हुआ महसूस हो रहे हैं या ऊर्जावान?",
+      options: ["बहुत ऊर्जावान", "सामान्य", "बहुत थका हुआ"],
+    },
+    {
+      key: "breakfast",
+      question: "क्या आज सुबह का नाश्ता ठीक से किया?",
+      options: ["हाँ, पूरा नाश्ता", "थोड़ा ही खाया", "नहीं खाया"],
+    },
+    {
+      key: "pain",
+      question: "क्या आज शरीर में कोई दर्द है?",
+      options: ["कोई दर्द नहीं", "हाँ, हल्का", "हाँ, तेज़"],
+    },
+    {
+      key: "stress",
+      question: "आज का तनाव स्तर 1 से 10 में कितना है?",
+      options: ["1-3 कम", "4-6 मध्यम", "7-10 अधिक"],
+    },
+    {
+      key: "family",
+      question: "क्या परिवार के सभी सदस्य आज स्वस्थ हैं?",
+      options: ["हाँ, सब ठीक हैं", "कोई बीमार है", "डॉक्टर जरूरी"],
+    },
   ],
 };
 
-function getCurrentSession(): { type: string; label: string } {
-  const h = new Date().getHours();
-  if (h < 10) return { type: "morning", label: "morning" };
-  if (h < 15) return { type: "noon", label: "noon" };
-  return { type: "evening", label: "evening" };
+const NOON_QUESTIONS = {
+  en: [
+    {
+      key: "water",
+      question: "Did you drink enough water today? (At least 3 liters)",
+      options: ["Yes, plenty", "Some, not enough", "Very little"],
+    },
+    {
+      key: "dizzy",
+      question: "Do you feel dizzy or have headache?",
+      options: ["No, fine", "Mild headache", "Severe dizziness"],
+    },
+    {
+      key: "pesticide",
+      question: "Did you spray pesticides today?",
+      options: ["No", "Yes, with protection", "Yes, without mask"],
+    },
+    {
+      key: "sun",
+      question: "How many hours did you work in sun today?",
+      options: ["Less than 2 hours", "2-4 hours", "More than 4 hours"],
+    },
+    {
+      key: "chest",
+      question: "Do you feel chest pain or breathing problem?",
+      options: ["No problem", "Mild discomfort", "Yes, difficulty breathing"],
+    },
+    {
+      key: "lunch",
+      question: "Did you eat proper lunch today?",
+      options: ["Yes, full meal", "Light snack", "Not yet"],
+    },
+  ],
+  te: [
+    {
+      key: "water",
+      question: "ఈ రోజు తగినంత నీళ్ళు తాగారా? (కనీసం 3 లీటర్లు)",
+      options: ["అవును, చాలా తాగాను", "కొంచెం తాగాను", "చాలా తక్కువ"],
+    },
+    {
+      key: "dizzy",
+      question: "తల తిరుగుతుందా లేదా తలనొప్పి ఉందా?",
+      options: ["లేదు, బాగున్నాను", "కొంచెం తలనొప్పి", "చాలా తలతిరుగుతోంది"],
+    },
+    {
+      key: "pesticide",
+      question: "ఈ రోజు పురుగుమందు పిచికారీ చేశారా?",
+      options: ["లేదు", "అవును, రక్షణతో", "అవును, మాస్క్ లేకుండా"],
+    },
+    {
+      key: "sun",
+      question: "ఈ రోజు ఎండలో ఎన్ని గంటలు పని చేశారు?",
+      options: ["2 గంటల కంటే తక్కువ", "2-4 గంటలు", "4 గంటల కంటే ఎక్కువ"],
+    },
+    {
+      key: "chest",
+      question: "గుండె నొప్పి లేదా శ్వాస తీసుకోవడంలో ఇబ్బందిగా ఉందా?",
+      options: ["సమస్య లేదు", "కొంచెం అసౌకర్యం", "అవును, శ్వాస ఇబ్బంది"],
+    },
+    {
+      key: "lunch",
+      question: "ఈ రోజు మధ్యాహ్నం భోజనం సరిగ్గా చేశారా?",
+      options: ["అవును, పూర్తి భోజనం", "తేలికగా తిన్నాను", "ఇంకా తినలేదు"],
+    },
+  ],
+  hi: [
+    {
+      key: "water",
+      question: "क्या आज पर्याप्त पानी पिया? (कम से कम 3 लीटर)",
+      options: ["हाँ, काफी पिया", "थोड़ा पिया", "बहुत कम"],
+    },
+    {
+      key: "dizzy",
+      question: "क्या चक्कर आ रहे हैं या सिरदर्द है?",
+      options: ["नहीं, ठीक हूँ", "हल्का सिरदर्द", "तेज़ चक्कर"],
+    },
+    {
+      key: "pesticide",
+      question: "क्या आज कीटनाशक का छिड़काव किया?",
+      options: ["नहीं", "हाँ, सुरक्षा के साथ", "हाँ, बिना मास्क के"],
+    },
+    {
+      key: "sun",
+      question: "आज धूप में कितने घंटे काम किया?",
+      options: ["2 घंटे से कम", "2-4 घंटे", "4 घंटे से अधिक"],
+    },
+    {
+      key: "chest",
+      question: "क्या सीने में दर्द या सांस लेने में तकलीफ है?",
+      options: ["कोई समस्या नहीं", "हल्की तकलीफ", "हाँ, सांस में दिक्कत"],
+    },
+    {
+      key: "lunch",
+      question: "क्या आज दोपहर का खाना ठीक से खाया?",
+      options: ["हाँ, पूरा खाना", "हल्का खाया", "अभी नहीं खाया"],
+    },
+  ],
+};
+
+const EVENING_QUESTIONS = {
+  en: [
+    {
+      key: "energy",
+      question: "How was your overall energy level today?",
+      options: ["Good, felt strong", "Average", "Very low, exhausted"],
+    },
+    {
+      key: "meals",
+      question: "Did you eat proper lunch and dinner today?",
+      options: ["Yes, both meals", "Only one meal", "Skipped meals"],
+    },
+    {
+      key: "skin",
+      question: "Any skin irritation or eye problem today?",
+      options: ["No problem", "Minor irritation", "Needs treatment"],
+    },
+    {
+      key: "crop",
+      question: "How is your crop looking today?",
+      options: [
+        "Healthy, growing well",
+        "Some issues noticed",
+        "Serious problem",
+      ],
+    },
+    {
+      key: "mental",
+      question: "Did you feel mentally stressed today?",
+      options: ["No, relaxed", "A little stressed", "Very stressed"],
+    },
+    {
+      key: "doctor",
+      question: "Do you feel you need to see a doctor?",
+      options: ["No, I'm fine", "Maybe tomorrow", "Yes, urgently"],
+    },
+  ],
+  te: [
+    {
+      key: "energy",
+      question: "ఈ రోజు మొత్తం మీద శక్తి స్థాయి ఎలా ఉంది?",
+      options: [
+        "బాగుంది, శక్తిగా అనిపించింది",
+        "సాధారణంగా",
+        "చాలా తక్కువ, అలసిపోయాను",
+      ],
+    },
+    {
+      key: "meals",
+      question: "మధ్యాహ్నం మరియు రాత్రి భోజనం సరిగ్గా చేశారా?",
+      options: ["అవును, రెండూ తిన్నాను", "ఒక్క పూట మాత్రమే", "తినలేదు"],
+    },
+    {
+      key: "skin",
+      question: "చర్మం మంటగా ఉందా లేదా కళ్ళు మండుతున్నాయా?",
+      options: ["సమస్య లేదు", "కొంచెం మంట", "చికిత్స అవసరం"],
+    },
+    {
+      key: "crop",
+      question: "ఈ రోజు మీ పంట ఎలా ఉంది?",
+      options: [
+        "ఆరోగ్యంగా పెరుగుతోంది",
+        "కొన్ని సమస్యలు కనిపించాయి",
+        "తీవ్రమైన సమస్య",
+      ],
+    },
+    {
+      key: "mental",
+      question: "ఈ రోజు మానసికంగా ఒత్తిడిగా అనిపించిందా?",
+      options: ["లేదు, రిలాక్స్‌గా ఉన్నాను", "కొంచెం ఒత్తిడి", "చాలా ఒత్తిడి"],
+    },
+    {
+      key: "doctor",
+      question: "డాక్టర్ దగ్గరకు వెళ్ళాల్సిన అవసరం ఉందా?",
+      options: ["లేదు, నేను బాగున్నాను", "రేపు వెళతాను", "అవును, అత్యవసరం"],
+    },
+  ],
+  hi: [
+    {
+      key: "energy",
+      question: "आज कुल मिलाकर ऊर्जा का स्तर कैसा था?",
+      options: ["अच्छा, ताकत महसूस हुई", "सामान्य", "बहुत कम, थक गया"],
+    },
+    {
+      key: "meals",
+      question: "क्या आज दोपहर और रात का खाना ठीक से खाया?",
+      options: ["हाँ, दोनों खाए", "सिर्फ एक बार", "खाना छोड़ा"],
+    },
+    {
+      key: "skin",
+      question: "क्या आज त्वचा में जलन या आंखों में समस्या हुई?",
+      options: ["कोई समस्या नहीं", "हल्की जलन", "इलाज जरूरी"],
+    },
+    {
+      key: "crop",
+      question: "आज आपकी फसल कैसी दिख रही है?",
+      options: [
+        "स्वस्थ, अच्छी बढ़ रही है",
+        "कुछ समस्याएं दिखीं",
+        "गंभीर समस्या",
+      ],
+    },
+    {
+      key: "mental",
+      question: "क्या आज मानसिक तनाव महसूस हुआ?",
+      options: ["नहीं, आराम था", "थोड़ा तनाव", "बहुत तनाव"],
+    },
+    {
+      key: "doctor",
+      question: "क्या आपको डॉक्टर के पास जाने की जरूरत लग रही है?",
+      options: ["नहीं, मैं ठीक हूँ", "शायद कल", "हाँ, जरूरी है"],
+    },
+  ],
+};
+
+const WEEKLY_QUESTIONS = {
+  en: [
+    {
+      key: "income",
+      question: "Did you earn enough money this week?",
+      options: ["Yes, satisfied", "Average earnings", "No, very less"],
+    },
+    {
+      key: "loan",
+      question: "Do you have any loan stress this week?",
+      options: ["No loan stress", "Some worry", "Very stressed about loans"],
+    },
+    {
+      key: "doctor",
+      question: "Did you visit a doctor this month?",
+      options: ["Yes, regular checkup", "Only when sick", "No, not visited"],
+    },
+    {
+      key: "children",
+      question: "Are your children going to school regularly?",
+      options: ["Yes, regularly", "Sometimes missing", "Not going"],
+    },
+    {
+      key: "hope",
+      question: "Do you feel hopeful about your farming future?",
+      options: [
+        "Yes, very hopeful",
+        "Somewhat hopeful",
+        "Worried about future",
+      ],
+    },
+  ],
+  te: [
+    {
+      key: "income",
+      question: "ఈ వారం తగినంత ఆదాయం వచ్చిందా?",
+      options: ["అవును, సంతోషంగా ఉన్నాను", "సగటు ఆదాయం", "లేదు, చాలా తక్కువ"],
+    },
+    {
+      key: "loan",
+      question: "ఈ వారం అప్పుల ఒత్తిడి ఉందా?",
+      options: [
+        "అప్పుల ఒత్తిడి లేదు",
+        "కొంచెం ఆందోళన",
+        "అప్పుల గురించి చాలా ఒత్తిడి",
+      ],
+    },
+    {
+      key: "doctor",
+      question: "ఈ నెలలో డాక్టర్ దగ్గరకు వెళ్ళారా?",
+      options: [
+        "అవును, రెగ్యులర్ చెకప్",
+        "అనారోగ్యం వచ్చినప్పుడే",
+        "లేదు, వెళ్ళలేదు",
+      ],
+    },
+    {
+      key: "children",
+      question: "మీ పిల్లలు పాఠశాలకు క్రమంగా వెళ్తున్నారా?",
+      options: ["అవును, క్రమంగా", "కొన్నిసార్లు తప్పుతున్నారు", "వెళ్ళడం లేదు"],
+    },
+    {
+      key: "hope",
+      question: "మీ వ్యవసాయం భవిష్యత్తు గురించి ఆశగా అనిపిస్తుందా?",
+      options: ["అవును, చాలా ఆశగా", "కొంచెం ఆశగా", "భవిష్యత్తు గురించి ఆందోళన"],
+    },
+  ],
+  hi: [
+    {
+      key: "income",
+      question: "क्या इस हफ्ते पर्याप्त कमाई हुई?",
+      options: ["हाँ, संतुष्ट हूँ", "औसत कमाई", "नहीं, बहुत कम"],
+    },
+    {
+      key: "loan",
+      question: "क्या इस हफ्ते कर्ज का तनाव है?",
+      options: ["कोई तनाव नहीं", "थोड़ी चिंता", "कर्ज से बहुत परेशान"],
+    },
+    {
+      key: "doctor",
+      question: "क्या इस महीने डॉक्टर के पास गए?",
+      options: ["हाँ, नियमित जांच", "बीमार होने पर ही", "नहीं गया"],
+    },
+    {
+      key: "children",
+      question: "क्या बच्चे नियमित रूप से स्कूल जा रहे हैं?",
+      options: ["हाँ, नियमित", "कभी-कभी नहीं जाते", "स्कूल नहीं जा रहे"],
+    },
+    {
+      key: "hope",
+      question: "क्या खेती के भविष्य के बारे में उम्मीद है?",
+      options: ["हाँ, बहुत उम्मीद", "थोड़ी उम्मीद", "भविष्य की चिंता"],
+    },
+  ],
+};
+function getCurrentSession(): {
+  type: "morning" | "noon" | "evening" | "weekly";
+  label: string;
+} {
+  const now = new Date();
+  const h = now.getHours();
+  const day = now.getDay();
+
+  if (day === 0 && h >= 18)
+    return { type: "weekly", label: "Weekly Check (Sunday)" };
+  if (h >= 7 && h < 12)
+    return { type: "morning", label: "Morning Check (7 AM)" };
+  if (h >= 12 && h < 18)
+    return { type: "noon", label: "Field Work Check (12 PM)" };
+  if (h >= 18) return { type: "evening", label: "Evening Check (6 PM)" };
+
+  return { type: "morning", label: "Morning Check (7 AM)" };
+}
+function getQuestionsForSession(session: string, language: Language) {
+  const lang = (["te", "hi"].includes(language) ? language : "en") as
+    | "en"
+    | "te"
+    | "hi";
+  switch (session) {
+    case "morning":
+      return MORNING_QUESTIONS[lang];
+    case "noon":
+      return NOON_QUESTIONS[lang];
+    case "weekly":
+      return WEEKLY_QUESTIONS[lang];
+    default:
+      return EVENING_QUESTIONS[lang];
+  }
 }
 
 export default function Health({ language }: HealthProps) {
   const tx = useTranslation(language);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { isListening, isSpeaking, startListening, stopListening, speak, stopSpeaking } = useVoice(language);
+  const {
+    isListening,
+    isSpeaking,
+    startListening,
+    stopListening,
+    speak,
+    stopSpeaking,
+  } = useVoice(language);
 
   const [step, setStep] = useState<"intro" | "questions" | "result">("intro");
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<any>(null);
 
-  const questions = HEALTH_QUESTIONS[language] || HEALTH_QUESTIONS.en;
   const session = getCurrentSession();
+  const questions = getQuestionsForSession(session.type, language);
+
+  const sessionEmoji: Record<string, string> = {
+    morning: "🌅",
+    noon: "☀️",
+    evening: "🌆",
+    weekly: "📅",
+  };
 
   const checkinMutation = useMutation({
     mutationFn: async () => {
-      const answersPayload: Record<string, string> = {};
+      const payload: Record<string, string> = {};
       questions.forEach((q) => {
-        answersPayload[q.question] = answers[q.key] || "";
+        payload[q.question] = answers[q.key] || "";
       });
       const res = await apiRequest("POST", "/api/health-checkin", {
         sessionType: session.type,
         language,
-        answers: answersPayload,
+        answers: payload,
       });
       return res.json();
     },
@@ -87,32 +513,19 @@ export default function Health({ language }: HealthProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/health-checkins"] });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to process. Please try again.", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to process. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
   function handleAnswer(answer: string) {
     const q = questions[currentQ];
     setAnswers((prev) => ({ ...prev, [q.key]: answer }));
-    if (currentQ < questions.length - 1) {
-      setCurrentQ((prev) => prev + 1);
-    } else {
-      checkinMutation.mutate();
-    }
-  }
-
-  function speakAdvice() {
-    if (!result) return;
-    if (isSpeaking) stopSpeaking();
-    else speak(result.advice || "");
-  }
-
-  function speakQuestion() {
-    if (step === "questions") {
-      const q = questions[currentQ];
-      if (isListening) stopListening();
-      else speak(q.question);
-    }
+    if (currentQ < questions.length - 1) setCurrentQ((p) => p + 1);
+    else checkinMutation.mutate();
   }
 
   function reset() {
@@ -123,15 +536,50 @@ export default function Health({ language }: HealthProps) {
   }
 
   const statusConfig = {
-    green: { color: "status-green", icon: CheckCircle2, label: tx.statusGreen, emoji: "✅" },
-    yellow: { color: "status-yellow", icon: AlertTriangle, label: tx.statusYellow, emoji: "⚠️" },
-    red: { color: "status-red", icon: XCircle, label: tx.statusRed, emoji: "🚨" },
-  };
-
-  const sessionLabels: Record<string, string> = {
-    morning: tx.morningSession,
-    noon: tx.noonSession,
-    evening: tx.eveningSession,
+    green: {
+      bg: "bg-green-50 dark:bg-green-950/20 border border-green-300",
+      color: "text-green-600",
+      emoji: "✅",
+      label:
+        language === "te"
+          ? "మీరు చాలా బాగున్నారు!"
+          : language === "hi"
+            ? "आप बिल्कुल ठीक हैं!"
+            : "You are doing great!",
+    },
+    yellow: {
+      bg: "bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-300",
+      color: "text-yellow-600",
+      emoji: "⚠️",
+      label:
+        language === "te"
+          ? "కొంచెం జాగ్రత్త అవసరం"
+          : language === "hi"
+            ? "थोड़ी सावधानी जरूरी"
+            : "Some caution needed",
+    },
+    red: {
+      bg: "bg-red-50 dark:bg-red-950/20 border border-red-300",
+      color: "text-red-600",
+      emoji: "🚨",
+      label:
+        language === "te"
+          ? "వెంటనే డాక్టర్ దగ్గరకు వెళ్ళండి"
+          : language === "hi"
+            ? "तुरंत डॉक्टर के पास जाएं"
+            : "See doctor immediately",
+    },
+    critical: {
+      bg: "bg-red-100 dark:bg-red-950/40 border-2 border-red-500",
+      color: "text-red-700",
+      emoji: "🆘",
+      label:
+        language === "te"
+          ? "అత్యవసరం! 108 కి call చేయండి"
+          : language === "hi"
+            ? "आपातकाल! 108 पर कॉल करें"
+            : "Emergency! Call 108",
+    },
   };
 
   return (
@@ -141,25 +589,23 @@ export default function Health({ language }: HealthProps) {
         <h2 className="text-xl font-bold">{tx.healthCheckin}</h2>
       </div>
 
-      {/* Intro */}
       {step === "intro" && (
         <Card>
           <CardContent className="p-6 space-y-4 text-center">
-            <div className="text-5xl">💊</div>
+            <div className="text-5xl">{sessionEmoji[session.type]}</div>
             <div>
-              <h3 className="text-lg font-bold mb-1">{sessionLabels[session.type]}</h3>
+              <h3 className="text-lg font-bold mb-1">{session.label}</h3>
               <p className="text-sm text-muted-foreground">
                 {language === "te"
-                  ? `${questions.length} ప్రశ్నలు అడుగుతాం. మీరు సరిగ్గా సమాధానం ఇవ్వండి.`
+                  ? `${questions.length} ప్రశ్నలు అడుగుతాం. నిజాయితీగా సమాధానం ఇవ్వండి.`
                   : language === "hi"
-                  ? `${questions.length} सवाल पूछे जाएंगे। सही जवाब दें।`
-                  : `We'll ask you ${questions.length} health questions. Answer honestly for best advice.`}
+                    ? `${questions.length} सवाल पूछे जाएंगे। सही जवाब दें।`
+                    : `We'll ask you ${questions.length} health questions. Answer honestly for best advice.`}
               </p>
             </div>
             <Button
               className="farmer-btn w-full"
               onClick={() => setStep("questions")}
-              data-testid="button-start-checkin"
             >
               {tx.startCheckin}
             </Button>
@@ -167,7 +613,6 @@ export default function Health({ language }: HealthProps) {
         </Card>
       )}
 
-      {/* Questions */}
       {step === "questions" && (
         <Card>
           <CardHeader className="pb-3">
@@ -175,152 +620,212 @@ export default function Health({ language }: HealthProps) {
               <span className="text-xs text-muted-foreground font-medium">
                 {currentQ + 1} / {questions.length}
               </span>
-              <Button variant="ghost" size="icon" onClick={speakQuestion} data-testid="button-speak-question">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() =>
+                  isSpeaking
+                    ? stopSpeaking()
+                    : speak(questions[currentQ].question)
+                }
+              >
                 {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
               </Button>
             </div>
-            {/* Progress bar */}
             <div className="w-full bg-muted rounded-full h-2">
               <div
                 className="bg-primary h-2 rounded-full transition-all duration-300"
-                style={{ width: `${((currentQ) / questions.length) * 100}%` }}
+                style={{ width: `${(currentQ / questions.length) * 100}%` }}
               />
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-base font-semibold leading-snug" data-testid="text-question">
+            <p className="text-base font-semibold leading-snug">
               {questions[currentQ].question}
             </p>
-
-            {/* Answer options */}
             <div className="space-y-2">
               {questions[currentQ].options.map((opt) => (
                 <Button
                   key={opt}
                   variant="outline"
-                  className="w-full farmer-btn justify-start text-left"
+                  className="w-full justify-start text-left"
                   onClick={() => handleAnswer(opt)}
                   disabled={checkinMutation.isPending}
-                  data-testid={`button-answer-${opt.replace(/\s+/g, "-").toLowerCase()}`}
                 >
                   {opt}
                 </Button>
               ))}
             </div>
-
-            {/* Voice input for custom answer */}
             <Button
               variant="ghost"
-              className={`w-full text-sm ${isListening ? "text-red-500 recording-pulse" : "text-muted-foreground"}`}
-              onClick={() => {
-                if (isListening) stopListening();
-                else startListening((text) => handleAnswer(text));
-              }}
-              data-testid="button-voice-answer"
+              className={`w-full text-sm ${isListening ? "text-red-500" : "text-muted-foreground"}`}
+              onClick={() =>
+                isListening
+                  ? stopListening()
+                  : startListening((text) => handleAnswer(text))
+              }
             >
-              {isListening ? <MicOff size={16} className="mr-2" /> : <Mic size={16} className="mr-2" />}
-              {isListening ? tx.listening : tx.voiceInput}
+              {isListening ? (
+                <MicOff size={16} className="mr-2" />
+              ) : (
+                <Mic size={16} className="mr-2" />
+              )}
+              {isListening
+                ? language === "te"
+                  ? "వింటున్నాను..."
+                  : language === "hi"
+                    ? "सुन रहा हूँ..."
+                    : "Listening..."
+                : language === "te"
+                  ? "వాయిస్ ద్వారా సమాధానం"
+                  : language === "hi"
+                    ? "आवाज़ से जवाब दें"
+                    : "Answer by voice"}
             </Button>
-
             {currentQ > 0 && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setCurrentQ((p) => p - 1)}
-                data-testid="button-back"
               >
-                <ChevronLeft size={16} className="mr-1" /> {tx.back}
+                {language === "te"
+                  ? "← వెనక్కి"
+                  : language === "hi"
+                    ? "← वापस"
+                    : "← Back"}
               </Button>
             )}
-
             {checkinMutation.isPending && (
               <div className="text-center text-sm text-muted-foreground animate-pulse">
-                AI is analyzing your health...
+                {language === "te"
+                  ? "AI విశ్లేషిస్తోంది..."
+                  : language === "hi"
+                    ? "AI विश्लेषण कर रहा है..."
+                    : "AI is analyzing..."}
               </div>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* Result */}
-      {step === "result" && result && (() => {
-        const cfg = statusConfig[result.status as keyof typeof statusConfig] || statusConfig.green;
-        const StatusIcon = cfg.icon;
-        return (
-          <div className="space-y-4">
-            {/* Status Banner */}
-            <div className={`rounded-xl p-4 ${cfg.color}`}>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-3xl">{cfg.emoji}</span>
-                <div>
-                  <p className="font-bold text-base">{cfg.label}</p>
-                  {result.statusMessage && (
-                    <p className="text-xs opacity-80">{result.statusMessage}</p>
-                  )}
+      {step === "result" &&
+        result &&
+        (() => {
+          const cfg =
+            statusConfig[result.status as keyof typeof statusConfig] ||
+            statusConfig.green;
+          return (
+            <div className="space-y-4">
+              <div className={`rounded-xl p-4 ${cfg.bg}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{cfg.emoji}</span>
+                  <div className="flex-1">
+                    <p className={`font-bold text-base ${cfg.color}`}>
+                      {cfg.label}
+                    </p>
+                    {result.statusMessage && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {result.statusMessage}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      isSpeaking ? stopSpeaking() : speak(result.advice || "")
+                    }
+                  >
+                    {isSpeaking ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="ml-auto"
-                  onClick={speakAdvice}
-                  data-testid="button-speak-advice"
-                >
-                  {isSpeaking ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                </Button>
               </div>
-            </div>
-
-            {/* AI Advice */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">{tx.aiAdvice}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-relaxed" data-testid="text-ai-advice">
-                  {result.advice}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Tips */}
-            {result.tips && result.tips.length > 0 && (
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">{tx.tips}</CardTitle>
+                  <CardTitle className="text-sm">
+                    {language === "te"
+                      ? "AI సలహా"
+                      : language === "hi"
+                        ? "AI सलाह"
+                        : "AI Advice"}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2">
-                    {result.tips.map((tip: string, i: number) => (
-                      <li key={i} className="flex gap-2 text-sm">
-                        <span className="text-primary">•</span>
-                        <span>{tip}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <p className="text-sm leading-relaxed">{result.advice}</p>
                 </CardContent>
               </Card>
-            )}
-
-            {/* Nearest PHC if red */}
-            {result.status === "red" && result.nearestPHC && (
-              <Card className="border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
-                <CardContent className="p-3">
-                  <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">{tx.nearestPHC}</p>
-                  <p className="text-sm font-medium">{result.nearestPHC}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            <Button
-              className="farmer-btn w-full"
-              onClick={reset}
-              data-testid="button-new-checkin"
-            >
-              {tx.startCheckin}
-            </Button>
-          </div>
-        );
-      })()}
+              {result.tips?.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">
+                      {language === "te"
+                        ? "చిట్కాలు"
+                        : language === "hi"
+                          ? "सुझाव"
+                          : "Tips"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {result.tips.map((tip: string, i: number) => (
+                        <li key={i} className="flex gap-2 text-sm">
+                          <span className="text-primary">•</span>
+                          <span>{tip}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+              {(result.status === "red" || result.status === "critical") && (
+                <Card className="border-red-400 bg-red-50 dark:bg-red-950/20">
+                  <CardContent className="p-4 space-y-2">
+                    {result.status === "critical" && (
+                      <div className="text-center">
+                        <p className="text-lg font-bold text-red-700">
+                          🆘 అత్యవసరం!
+                        </p>
+                        <a
+                          href="tel:108"
+                          className="block mt-2 bg-red-600 text-white py-2 rounded-lg text-center font-bold"
+                        >
+                          📞 108
+                        </a>
+                      </div>
+                    )}
+                    {result.status === "red" && (
+                      <>
+                        <p className="text-xs font-semibold text-red-600">
+                          {language === "te"
+                            ? "దగ్గరలో PHC"
+                            : language === "hi"
+                              ? "नज़दीकी PHC"
+                              : "Nearest PHC"}
+                        </p>
+                        <p className="text-sm font-medium">
+                          {result.nearestPHC || "Contact 104 for nearest PHC"}
+                        </p>
+                        <a
+                          href="tel:104"
+                          className="block mt-1 bg-orange-500 text-white py-2 rounded-lg text-center font-bold text-sm"
+                        >
+                          📞 104 — Health Helpline
+                        </a>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+              <Button className="farmer-btn w-full" onClick={reset}>
+                {language === "te"
+                  ? "మళ్ళీ చేయండి"
+                  : language === "hi"
+                    ? "फिर से करें"
+                    : "Start New Check-in"}
+              </Button>
+            </div>
+          );
+        })()}
     </div>
   );
 }

@@ -18,9 +18,10 @@ export function registerImageRoutes(app: Express): void {
           responseModalities: [Modality.TEXT, Modality.IMAGE],
         },
       });
-
       const candidate = response.candidates?.[0];
-      const imagePart = candidate?.content?.parts?.find((part: any) => part.inlineData);
+      const imagePart = candidate?.content?.parts?.find(
+        (part: any) => part.inlineData,
+      );
 
       if (!imagePart?.inlineData?.data) {
         return res.status(500).json({ error: "No image data in response" });
@@ -37,4 +38,3 @@ export function registerImageRoutes(app: Express): void {
     }
   });
 }
-
