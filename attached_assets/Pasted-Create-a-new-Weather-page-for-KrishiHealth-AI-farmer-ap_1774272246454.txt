@@ -1,0 +1,57 @@
+Create a new Weather page for KrishiHealth AI farmer app with these requirements:
+
+1. CREATE new file: client/src/pages/weather.tsx
+2. ADD weather route in App.tsx navigation
+3. ADD weather icon in bottom navigation bar
+
+WEATHER DATA:
+- Use Open-Meteo API (free, no API key needed):
+  https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&timezone=Asia/Kolkata&forecast_days=7
+- Get user location using browser geolocation API
+- If location denied, default to Hyderabad (17.3850, 78.4867)
+
+DISPLAY:
+1. Current Weather Card (top):
+   - Temperature (°C)
+   - Humidity (%)
+   - Wind speed (km/h)
+   - Weather icon (use emoji: ☀️🌤️⛅🌧️⛈️🌨️🌫️)
+   - Location name using reverse geocoding
+
+2. 7-Day Forecast Cards:
+   - Day name (Monday, Tuesday etc in user's language)
+   - Weather emoji icon
+   - Max/Min temperature
+   - Rain probability
+
+3. FARMER ADVISORY POPUP (most important):
+   - Show as a notification banner at top of page
+   - Calculate farming advice based on weather:
+     * Temperature > 40°C: "⚠️ అతి వేడిగా ఉంది! పొలం పనికి వెళ్ళకండి - heat stroke ప్రమాదం"
+     * Rain expected today: "🌧️ ఈ రోజు వర్షం రావచ్చు - పురుగుమందు వద్దు, పంట కోయడం వద్దు"
+     * High humidity > 80%: "💧 తేమ ఎక్కువగా ఉంది - fungal disease జాగ్రత్త"
+     * Wind > 30 km/h: "💨 గాలి ఎక్కువగా ఉంది - spray చేయకండి"
+     * Good weather: "✅ పొలం పనికి మంచి రోజు!"
+   - Show in user's selected language (te/hi/en)
+   - Advisory should look like a mobile notification popup
+
+4. WEATHER ALERTS (push notification style):
+   - Fixed banner at top showing today's most important alert
+   - Yellow/Red/Green color based on severity
+   - Dismiss button
+
+5. STYLING:
+   - Beautiful gradient background based on weather (blue for clear, grey for cloudy, dark for rain)
+   - Animated weather icons
+   - Glassmorphism card style
+   - Mobile-first design
+
+6. LANGUAGE SUPPORT:
+   - All text in user's selected language
+   - Weather descriptions in Telugu/Hindi/English
+   - Day names in selected language
+
+Add weather to navigation:
+- Add CloudSun icon to bottom nav
+- Route: /weather
+- Update App.tsx to include Weather component
