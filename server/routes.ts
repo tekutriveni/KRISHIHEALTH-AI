@@ -635,12 +635,25 @@ Return ONLY JSON, no markdown.`,
         const cleaned = text.replace(/```json\n?|\n?```/g, "").trim();
         const result = JSON.parse(cleaned);
 
-        // Auto-send SMS if severe or critical
-        if (
-          (result.severity === "severe" || result.severity === "critical") &&
-          familyPhone
-        ) {
-          const smsMessage = `URGENT: ${farmerName} has ${result.woundType || "a serious injury"}. Severity: ${result.severity}. ${result.smsAlert || "Please help immediately!"}`;
+        // Always send SMS when phone is provided (all severities)
+        if (familyPhone) {
+          const sev = (result.severity || "mild").toUpperCase();
+          const woundType = result.woundType || "injury";
+          const remedy = result.naturalRemedies?.[0] || "";
+          const medicine = result.englishMedicine || "";
+          const timeToHeal = result.timeToHeal || "";
+
+          let smsMessage = "";
+          if (result.severity === "critical") {
+            smsMessage = `🆘 EMERGENCY! ${farmerName} has ${woundType}. Severity: CRITICAL. ${result.emergencyAction || "Call 108 immediately!"}. ${result.smsAlert || ""}`.slice(0, 320);
+          } else if (result.severity === "severe") {
+            smsMessage = `🚨 URGENT: ${farmerName} has ${woundType}. Severity: SEVERE. First aid: ${remedy}. Medicine: ${medicine}. See doctor now! ${result.smsAlert || ""}`.slice(0, 320);
+          } else if (result.severity === "moderate") {
+            smsMessage = `⚠️ KrishiHealth Alert: ${farmerName} has ${woundType}. Severity: Moderate. Home remedy: ${remedy}. Medicine: ${medicine}. Heals in: ${timeToHeal}.`.slice(0, 320);
+          } else {
+            smsMessage = `✅ KrishiHealth: ${farmerName} has a mild ${woundType}. Home remedy: ${remedy}. Heals in: ${timeToHeal}. Stay safe!`.slice(0, 320);
+          }
+
           try {
             await sendFast2SMS(familyPhone, smsMessage);
             await storage.createSmsAlert({
@@ -650,10 +663,14 @@ Return ONLY JSON, no markdown.`,
               status: "sent",
             });
             result.smsSent = true;
+            result.smsMessage = smsMessage;
           } catch (smsErr) {
             console.error("Injury SMS error:", smsErr);
             result.smsSent = false;
+            result.smsError = (smsErr as any)?.message || "SMS failed";
           }
+        } else {
+          result.smsSent = false;
         }
 
         res.json(result);
