@@ -28,31 +28,28 @@ async function sendFast2SMS(phoneNumber: string, message: string) {
     const apiKey = process.env.FAST2SMS_API_KEY;
     if (!apiKey) throw new Error("Fast2SMS API key not configured");
 
-    const cleanPhone = phoneNumber
+    // Clean phone number - remove +91, spaces, dashes
+    const cleanNumber = phoneNumber
       .replace(/\+91/g, "")
-      .replace(/\s/g, "")
-      .replace(/-/g, "");
+      .replace(/[\s\-]/g, "")
+      .trim();
 
-    const response = await fetch("https://www.fast2sms.com/dev/bulkV2", {
-      method: "POST",
+    const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${apiKey}&route=v3&sender_id=FTWSMS&message=${encodeURIComponent(message)}&language=english&flash=0&numbers=${cleanNumber}`;
+
+    const response = await fetch(url, {
+      method: "GET",
       headers: {
-        authorization: apiKey,
-        "Content-Type": "application/json",
+        "cache-control": "no-cache",
       },
-      body: JSON.stringify({
-        route: "q",
-        message: message,
-        language: "english",
-        flash: 0,
-        numbers: cleanPhone,
-      }),
     });
 
     const data = await response.json();
+    console.log("Fast2SMS response:", JSON.stringify(data));
+
     if (data.return === true) {
       return { success: true };
     } else {
-      throw new Error(data.message?.[0] || "SMS failed");
+      throw new Error(data.message || JSON.stringify(data));
     }
   } catch (err: any) {
     console.error("Fast2SMS error:", err);
@@ -585,6 +582,87 @@ No markdown.`,
     const alerts = await storage.getSmsAlerts();
     res.json(alerts);
   });
+
+  // ── INJURY / WOUND DETECTION ──────────────────────────────────────────────
+  app.post(
+    "/api/injury-detect",
+    upload.single("image"),
+    async (req, res) => {
+      try {
+        const language = req.body.language || "en";
+        const farmerName = req.body.farmerName || "Farmer";
+        const familyPhone = req.body.familyPhone || "";
+        const langPrefix = getLanguagePromptPrefix(language);
+        const imageData = req.file?.buffer;
+        const imageMime = req.file?.mimetype || "image/jpeg";
+
+        if (!imageData) {
+          return res.status(400).json({ error: "No image uploaded" });
+        }
+
+        const imageBase64 = imageData.toString("base64");
+
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { inlineData: { mimeType: imageMime, data: imageBase64 } },
+                {
+                  text: `${langPrefix}You are a medical expert for Indian farmers. Analyze this wound/injury image carefully.
+Return ONLY a JSON object (no markdown):
+{
+  "severity": "mild|moderate|severe|critical",
+  "woundType": "type of injury described in the language specified above",
+  "naturalRemedies": ["home remedy 1 in language specified above", "home remedy 2", "home remedy 3"],
+  "englishMedicine": "medicine name in English with dosage",
+  "timeToHeal": "estimated healing time in the language specified above",
+  "warningIfIgnored": "what happens if untreated in the language specified above",
+  "emergencyAction": "immediate action needed in the language specified above",
+  "smsAlert": "short 1-line alert message in English for family"
+}
+If image is not a wound/injury, set severity to mild and woundType to Not a wound image.
+Return ONLY JSON, no markdown.`,
+                },
+              ],
+            },
+          ],
+          config: { maxOutputTokens: 2048 },
+        });
+
+        const text = response.text || "{}";
+        const cleaned = text.replace(/```json\n?|\n?```/g, "").trim();
+        const result = JSON.parse(cleaned);
+
+        // Auto-send SMS if severe or critical
+        if (
+          (result.severity === "severe" || result.severity === "critical") &&
+          familyPhone
+        ) {
+          const smsMessage = `URGENT: ${farmerName} has ${result.woundType || "a serious injury"}. Severity: ${result.severity}. ${result.smsAlert || "Please help immediately!"}`;
+          try {
+            await sendFast2SMS(familyPhone, smsMessage);
+            await storage.createSmsAlert({
+              phoneNumber: familyPhone,
+              message: smsMessage,
+              type: "injury_alert",
+              status: "sent",
+            });
+            result.smsSent = true;
+          } catch (smsErr) {
+            console.error("Injury SMS error:", smsErr);
+            result.smsSent = false;
+          }
+        }
+
+        res.json(result);
+      } catch (err) {
+        console.error("Injury detect error:", err);
+        res.status(500).json({ error: "Failed to analyze injury" });
+      }
+    },
+  );
 
   // ── AI CHAT ───────────────────────────────────────────────────────────────
   app.post("/api/ai-chat", async (req, res) => {

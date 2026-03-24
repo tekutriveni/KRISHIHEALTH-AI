@@ -12,7 +12,7 @@ import Mandi from "@/pages/mandi";
 import Chat from "@/pages/chat";
 import Alerts from "@/pages/alerts";
 import NotFound from "@/pages/not-found";
-
+import Weather from "@/pages/weather";
 function Router() {
   const { language, setLanguage } = useLanguage();
 
@@ -20,11 +20,24 @@ function Router() {
     <Layout language={language} setLanguage={setLanguage}>
       <Switch>
         <Route path="/" component={() => <Home language={language} />} />
-        <Route path="/disease" component={() => <Disease language={language} />} />
-        <Route path="/health" component={() => <Health language={language} />} />
+        <Route
+          path="/disease"
+          component={() => <Disease language={language} />}
+        />
+        <Route
+          path="/health"
+          component={() => <Health language={language} />}
+        />
         <Route path="/mandi" component={() => <Mandi language={language} />} />
         <Route path="/chat" component={() => <Chat language={language} />} />
-        <Route path="/alerts" component={() => <Alerts language={language} />} />
+        <Route
+          path="/alerts"
+          component={() => <Alerts language={language} />}
+        />
+        <Route
+          path="/weather"
+          component={() => <Weather language={language} />}
+        />
         <Route component={NotFound} />
       </Switch>
     </Layout>

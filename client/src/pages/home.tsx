@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/language";
 import type { Language } from "@/lib/language";
 import type { DiseaseDetection, HealthCheckin } from "@shared/schema";
-
 interface HomeProps {
   language: Language;
 }

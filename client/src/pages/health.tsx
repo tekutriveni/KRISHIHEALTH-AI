@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   HeartPulse,
@@ -10,9 +10,17 @@ import {
   AlertTriangle,
   XCircle,
   ChevronLeft,
+  Camera,
+  Bandage,
+  Phone,
+  AlertCircle,
+  Leaf,
+  Pill,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/language";
 import { useVoice } from "@/hooks/useVoice";
@@ -479,10 +487,19 @@ export default function Health({ language }: HealthProps) {
     stopSpeaking,
   } = useVoice(language);
 
+  const [activeTab, setActiveTab] = useState<"checkin" | "injury">("checkin");
   const [step, setStep] = useState<"intro" | "questions" | "result">("intro");
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<any>(null);
+
+  // Injury detection state
+  const [injuryImage, setInjuryImage] = useState<File | null>(null);
+  const [injuryPreview, setInjuryPreview] = useState<string | null>(null);
+  const [injuryResult, setInjuryResult] = useState<any>(null);
+  const [farmerName, setFarmerName] = useState("");
+  const [familyPhone, setFamilyPhone] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const session = getCurrentSession();
   const questions = getQuestionsForSession(session.type, language);
@@ -492,6 +509,61 @@ export default function Health({ language }: HealthProps) {
     noon: "☀️",
     evening: "🌆",
     weekly: "📅",
+  };
+
+  const injuryMutation = useMutation({
+    mutationFn: async () => {
+      if (!injuryImage) throw new Error("No image");
+      const formData = new FormData();
+      formData.append("image", injuryImage);
+      formData.append("language", language);
+      formData.append("farmerName", farmerName || "Farmer");
+      formData.append("familyPhone", familyPhone);
+      const res = await fetch("/api/injury-detect", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Failed to analyze");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setInjuryResult(data);
+      if (data.severity === "severe" || data.severity === "critical") {
+        if (familyPhone && data.smsSent) {
+          toast({
+            title: language === "te" ? "SMS పంపబడింది!" : language === "hi" ? "SMS भेजा गया!" : "SMS Alert Sent!",
+            description: language === "te" ? "కుటుంబ సభ్యుడికి అలర్ట్ పంపబడింది" : language === "hi" ? "परिवार को अलर्ट भेजा गया" : "Emergency alert sent to family",
+          });
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/sms-alerts"] });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to analyze injury. Please try again.", variant: "destructive" });
+    },
+  });
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setInjuryImage(file);
+      setInjuryPreview(URL.createObjectURL(file));
+      setInjuryResult(null);
+    }
+  }
+
+  function resetInjury() {
+    setInjuryImage(null);
+    setInjuryPreview(null);
+    setInjuryResult(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  const severityConfig: Record<string, { bg: string; color: string; label: string; emoji: string }> = {
+    mild: { bg: "bg-green-50 dark:bg-green-950/20 border border-green-300", color: "text-green-700", label: language === "te" ? "తేలికపాటి" : language === "hi" ? "हल्का" : "Mild", emoji: "✅" },
+    moderate: { bg: "bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-300", color: "text-yellow-700", label: language === "te" ? "మధ్యస్థం" : language === "hi" ? "मध्यम" : "Moderate", emoji: "⚠️" },
+    severe: { bg: "bg-orange-50 dark:bg-orange-950/20 border border-orange-400", color: "text-orange-700", label: language === "te" ? "తీవ్రమైనది" : language === "hi" ? "गंभीर" : "Severe", emoji: "🚨" },
+    critical: { bg: "bg-red-100 dark:bg-red-950/40 border-2 border-red-500", color: "text-red-700", label: language === "te" ? "అత్యంత తీవ్రం" : language === "hi" ? "अत्यंत गंभीर" : "Critical", emoji: "🆘" },
   };
 
   const checkinMutation = useMutation({
@@ -589,7 +661,243 @@ export default function Health({ language }: HealthProps) {
         <h2 className="text-xl font-bold">{tx.healthCheckin}</h2>
       </div>
 
-      {step === "intro" && (
+      {/* Tab Switcher */}
+      <div className="grid grid-cols-2 gap-2 bg-muted rounded-xl p-1">
+        <Button
+          variant={activeTab === "checkin" ? "default" : "ghost"}
+          className="rounded-lg text-sm h-10"
+          onClick={() => setActiveTab("checkin")}
+          data-testid="tab-checkin"
+        >
+          <HeartPulse size={15} className="mr-1.5" />
+          {language === "te" ? "ఆరోగ్య తనిఖీ" : language === "hi" ? "स्वास्थ्य जांच" : "Health Check"}
+        </Button>
+        <Button
+          variant={activeTab === "injury" ? "default" : "ghost"}
+          className="rounded-lg text-sm h-10"
+          onClick={() => setActiveTab("injury")}
+          data-testid="tab-injury"
+        >
+          <Bandage size={15} className="mr-1.5" />
+          {language === "te" ? "గాయం తనిఖీ" : language === "hi" ? "चोट जांच" : "Injury Check"}
+        </Button>
+      </div>
+
+      {/* INJURY TAB */}
+      {activeTab === "injury" && (
+        <div className="space-y-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Bandage size={18} className="text-orange-500" />
+                {language === "te" ? "గాయం / చోట్ల తనిఖీ" : language === "hi" ? "घाव / चोट की जांच" : "Injury & Wound Detection"}
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                {language === "te" ? "గాయం ఫోటో తీసి AI విశ్లేషణ పొందండి" : language === "hi" ? "चोट की फोटो लें और AI विश्लेषण पाएं" : "Take a photo of your injury for AI analysis"}
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                    {language === "te" ? "మీ పేరు" : language === "hi" ? "आपका नाम" : "Your Name"}
+                  </label>
+                  <Input
+                    value={farmerName}
+                    onChange={(e) => setFarmerName(e.target.value)}
+                    placeholder={language === "te" ? "పేరు" : language === "hi" ? "नाम" : "Name"}
+                    data-testid="input-farmer-name"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                    {language === "te" ? "కుటుంబ ఫోన్" : language === "hi" ? "परिवार का फ़ोन" : "Family Phone"}
+                  </label>
+                  <Input
+                    value={familyPhone}
+                    onChange={(e) => setFamilyPhone(e.target.value)}
+                    placeholder="9876543210"
+                    type="tel"
+                    data-testid="input-family-phone"
+                  />
+                </div>
+              </div>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleImageSelect}
+              />
+
+              {!injuryPreview ? (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full border-2 border-dashed border-orange-300 rounded-xl p-6 text-center hover:border-orange-500 transition-colors bg-orange-50 dark:bg-orange-950/20"
+                  data-testid="button-upload-injury"
+                >
+                  <Camera size={32} className="mx-auto text-orange-400 mb-2" />
+                  <p className="text-sm font-medium text-orange-600">
+                    {language === "te" ? "గాయం ఫోటో తీయండి / అప్‌లోడ్ చేయండి" : language === "hi" ? "चोट की फ़ोटो लें / अपलोड करें" : "Take / Upload Injury Photo"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {language === "te" ? "AI స్వయంగా విశ్లేషిస్తుంది" : language === "hi" ? "AI खुद विश्लेषण करेगा" : "AI will analyze automatically"}
+                  </p>
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="relative rounded-xl overflow-hidden">
+                    <img src={injuryPreview} alt="Injury" className="w-full max-h-56 object-cover" />
+                    <button
+                      onClick={resetInjury}
+                      className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  {!injuryResult && (
+                    <Button
+                      className="farmer-btn w-full bg-orange-500 hover:bg-orange-600"
+                      onClick={() => injuryMutation.mutate()}
+                      disabled={injuryMutation.isPending}
+                      data-testid="button-analyze-injury"
+                    >
+                      {injuryMutation.isPending ? (
+                        <span className="animate-pulse">
+                          {language === "te" ? "AI విశ్లేషిస్తోంది..." : language === "hi" ? "AI विश्लेषण हो रहा है..." : "AI Analyzing..."}
+                        </span>
+                      ) : (
+                        <>
+                          <AlertCircle size={18} className="mr-2" />
+                          {language === "te" ? "విశ్లేషించు" : language === "hi" ? "विश्लेषण करें" : "Analyze Injury"}
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Injury Result */}
+          {injuryResult && (() => {
+            const sev = injuryResult.severity || "mild";
+            const cfg = severityConfig[sev] || severityConfig.mild;
+            const isEmergency = sev === "severe" || sev === "critical";
+            return (
+              <div className="space-y-3">
+                {/* Emergency Banner */}
+                {isEmergency && (
+                  <div className="bg-red-600 text-white rounded-xl p-4 animate-pulse">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">🆘</span>
+                      <p className="font-bold text-lg">
+                        {sev === "critical"
+                          ? (language === "te" ? "అత్యవసరం! వెంటనే 108 కి call చేయండి!" : language === "hi" ? "आपातकाल! तुरंत 108 पर कॉल करें!" : "EMERGENCY! Call 108 Immediately!")
+                          : (language === "te" ? "తీవ్రమైన గాయం - వైద్యుడిని సంప్రదించండి" : language === "hi" ? "गंभीर चोट - डॉक्टर से मिलें" : "Serious Injury - See Doctor Now")}
+                      </p>
+                    </div>
+                    {familyPhone && injuryResult.smsSent && (
+                      <p className="text-xs bg-white/20 rounded px-2 py-1">
+                        📱 {language === "te" ? "కుటుంబానికి SMS అలర్ట్ పంపబడింది" : language === "hi" ? "परिवार को SMS अलर्ट भेजा गया" : "SMS alert sent to family"}
+                      </p>
+                    )}
+                    <a href="tel:108" className="block mt-3 bg-white text-red-600 font-bold py-2 rounded-lg text-center text-lg" data-testid="button-call-108">
+                      <Phone size={18} className="inline mr-2" />108 — {language === "te" ? "అత్యవసర సేవలు" : language === "hi" ? "आपातकालीन सेवाएं" : "Emergency Services"}
+                    </a>
+                  </div>
+                )}
+
+                {/* Severity Badge */}
+                <div className={`rounded-xl p-4 ${cfg.bg}`}>
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{cfg.emoji}</span>
+                    <div>
+                      <p className={`font-bold ${cfg.color}`}>
+                        {language === "te" ? "తీవ్రత: " : language === "hi" ? "गंभीरता: " : "Severity: "}
+                        <Badge variant="outline" className={`ml-1 ${cfg.color}`}>{cfg.label}</Badge>
+                      </p>
+                      <p className="text-sm font-medium mt-0.5">{injuryResult.woundType}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Natural Remedies FIRST */}
+                {injuryResult.naturalRemedies?.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2 text-green-700">
+                        <Leaf size={16} />
+                        {language === "te" ? "ఇంటి చిట్కాలు (సహజ చికిత్స)" : language === "hi" ? "घरेलू उपाय (प्राकृतिक)" : "Natural Home Remedies"}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2">
+                        {injuryResult.naturalRemedies.map((remedy: string, i: number) => (
+                          <li key={i} className="flex gap-2 text-sm">
+                            <span className="text-green-500 font-bold">{i + 1}.</span>
+                            <span>{remedy}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* English Medicine */}
+                {injuryResult.englishMedicine && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2 text-blue-600">
+                        <Pill size={16} />
+                        {language === "te" ? "మందు (అవసరమైతే)" : language === "hi" ? "दवाई (यदि जरूरी)" : "Medicine (if needed)"}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm font-medium">{injuryResult.englishMedicine}</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Healing Info */}
+                <Card>
+                  <CardContent className="p-4 space-y-2">
+                    {injuryResult.timeToHeal && (
+                      <div className="flex gap-2 text-sm">
+                        <span className="font-medium min-w-fit">
+                          {language === "te" ? "నయమవడానికి:" : language === "hi" ? "ठीक होने में:" : "Time to heal:"}
+                        </span>
+                        <span>{injuryResult.timeToHeal}</span>
+                      </div>
+                    )}
+                    {injuryResult.warningIfIgnored && (
+                      <div className="flex gap-2 text-sm text-orange-600">
+                        <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                        <span>{injuryResult.warningIfIgnored}</span>
+                      </div>
+                    )}
+                    {injuryResult.emergencyAction && (
+                      <div className="flex gap-2 text-sm text-red-600 font-medium">
+                        <XCircle size={14} className="mt-0.5 shrink-0" />
+                        <span>{injuryResult.emergencyAction}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Button variant="outline" className="farmer-btn w-full" onClick={resetInjury}>
+                  {language === "te" ? "మళ్ళీ తనిఖీ చేయండి" : language === "hi" ? "फिर से जांचें" : "Check Another Injury"}
+                </Button>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* HEALTH CHECKIN TAB */}
+      {activeTab === "checkin" && step === "intro" && (
         <Card>
           <CardContent className="p-6 space-y-4 text-center">
             <div className="text-5xl">{sessionEmoji[session.type]}</div>
@@ -613,7 +921,7 @@ export default function Health({ language }: HealthProps) {
         </Card>
       )}
 
-      {step === "questions" && (
+      {activeTab === "checkin" && step === "questions" && (
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between mb-2">
@@ -708,7 +1016,7 @@ export default function Health({ language }: HealthProps) {
         </Card>
       )}
 
-      {step === "result" &&
+      {activeTab === "checkin" && step === "result" &&
         result &&
         (() => {
           const cfg =

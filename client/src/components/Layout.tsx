@@ -1,5 +1,13 @@
 import { Link, useLocation } from "wouter";
-import { Home, Leaf, HeartPulse, TrendingUp, MessageSquare, Bell } from "lucide-react";
+import {
+  Home,
+  Leaf,
+  HeartPulse,
+  TrendingUp,
+  MessageSquare,
+  Bell,
+  Cloud,
+} from "lucide-react";
 import { LANGUAGES, useTranslation } from "@/lib/language";
 import type { Language } from "@/lib/language";
 import {
@@ -27,6 +35,12 @@ export function Layout({ children, language, setLanguage }: LayoutProps) {
     { path: "/mandi", icon: TrendingUp, label: tx.mandi },
     { path: "/chat", icon: MessageSquare, label: tx.chat },
     { path: "/alerts", icon: Bell, label: tx.alerts },
+    {
+      path: "/weather",
+      icon: Cloud,
+      label:
+        language === "te" ? "వాతావరణం" : language === "hi" ? "मौसम" : "Weather",
+    },
   ];
 
   return (
@@ -37,10 +51,15 @@ export function Layout({ children, language, setLanguage }: LayoutProps) {
           <span className="text-2xl">🌾</span>
           <div>
             <h1 className="text-lg font-bold leading-tight">{tx.appName}</h1>
-            <p className="text-xs opacity-70 leading-tight hidden sm:block">{tx.tagline}</p>
+            <p className="text-xs opacity-70 leading-tight hidden sm:block">
+              {tx.tagline}
+            </p>
           </div>
         </div>
-        <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+        <Select
+          value={language}
+          onValueChange={(v) => setLanguage(v as Language)}
+        >
           <SelectTrigger
             className="w-32 bg-sidebar-accent border-sidebar-border text-sidebar-foreground text-sm h-9"
             data-testid="select-language"
@@ -49,7 +68,11 @@ export function Layout({ children, language, setLanguage }: LayoutProps) {
           </SelectTrigger>
           <SelectContent>
             {LANGUAGES.map((l) => (
-              <SelectItem key={l.code} value={l.code} data-testid={`lang-option-${l.code}`}>
+              <SelectItem
+                key={l.code}
+                value={l.code}
+                data-testid={`lang-option-${l.code}`}
+              >
                 {l.flag} {l.label}
               </SelectItem>
             ))}
@@ -66,7 +89,8 @@ export function Layout({ children, language, setLanguage }: LayoutProps) {
       <nav className="fixed bottom-0 left-0 right-0 bg-sidebar border-t border-sidebar-border z-50">
         <div className="flex items-stretch max-w-2xl mx-auto">
           {navItems.map(({ path, icon: Icon, label }) => {
-            const isActive = location === path || (path !== "/" && location.startsWith(path));
+            const isActive =
+              location === path || (path !== "/" && location.startsWith(path));
             return (
               <Link
                 key={path}
@@ -79,7 +103,9 @@ export function Layout({ children, language, setLanguage }: LayoutProps) {
                 data-testid={`nav-${path.replace("/", "") || "home"}`}
               >
                 <Icon size={20} />
-                <span className="text-[10px] leading-tight text-center font-medium">{label}</span>
+                <span className="text-[10px] leading-tight text-center font-medium">
+                  {label}
+                </span>
               </Link>
             );
           })}
