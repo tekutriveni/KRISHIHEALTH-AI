@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -10,6 +11,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
+  X,
+  Cloud,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/language";
 import type { Language } from "@/lib/language";
 import type { DiseaseDetection, HealthCheckin } from "@shared/schema";
+import { WeatherMiniCard } from "@/pages/weather";
+
 interface HomeProps {
   language: Language;
 }
@@ -28,6 +33,7 @@ function StatusIcon({ status }: { status: string }) {
     return <AlertTriangle className="text-yellow-500" size={18} />;
   return <XCircle className="text-red-500" size={18} />;
 }
+
 function getCurrentSession(): string {
   const now = new Date();
   const h = now.getHours();
@@ -38,6 +44,153 @@ function getCurrentSession(): string {
   if (h >= 18) return "evening";
   return "morning";
 }
+
+// ── YouTube-style Weather Popup Notification ───────────────────────────────────
+function WeatherPopupAlert({ language }: { language: Language }) {
+  const [alert, setAlert] = useState<{
+    icon: string;
+    message: string;
+    level: "red" | "yellow" | "green";
+  } | null>(null);
+  const [visible, setVisible] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    const dismissed_key = "weather_alert_dismissed_" + new Date().toDateString();
+    if (sessionStorage.getItem(dismissed_key)) return;
+
+    const load = (lat: number, lon: number) => {
+      fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=Asia/Kolkata`,
+      )
+        .then((r) => r.json())
+        .then((data) => {
+          const c = data.current;
+          const temp = Math.round(c.temperature_2m);
+          const humidity = c.relative_humidity_2m;
+          const wind = Math.round(c.wind_speed_10m);
+          const code = c.weather_code;
+
+          let icon = "✅";
+          let level: "red" | "yellow" | "green" = "green";
+          let message =
+            language === "te"
+              ? "పొలం పనికి మంచి రోజు! సురక్షితంగా పని చేయండి."
+              : language === "hi"
+                ? "खेत के काम के लिए अच्छा दिन!"
+                : "Good day for farm work!";
+
+          if (temp > 40) {
+            icon = "🌡️";
+            level = "red";
+            message =
+              language === "te"
+                ? "అతి వేడిగా ఉంది! పొలం పనికి వెళ్ళకండి — Heat stroke ప్రమాదం!"
+                : language === "hi"
+                  ? "बहुत गर्म है! खेत में मत जाएं — Heat stroke का खतरा!"
+                  : "Too hot! Avoid field work — Heat stroke danger!";
+          } else if ([61, 63, 65, 80, 95, 96].includes(code)) {
+            icon = "🌧️";
+            level = "yellow";
+            message =
+              language === "te"
+                ? "వర్షం వస్తోంది — పురుగుమందు spray వద్దు!"
+                : language === "hi"
+                  ? "बारिश आ रही है — कीटनाशक स्प्रे मत करें!"
+                  : "Rain expected — Don't spray pesticides!";
+          } else if (humidity > 80) {
+            icon = "💧";
+            level = "yellow";
+            message =
+              language === "te"
+                ? "తేమ ఎక్కువగా ఉంది — Fungal disease జాగ్రత్త!"
+                : language === "hi"
+                  ? "नमी बहुत ज्यादा — Fungal रोग से सावधान!"
+                  : "High humidity — Watch for fungal disease!";
+          } else if (wind > 30) {
+            icon = "💨";
+            level = "yellow";
+            message =
+              language === "te"
+                ? "గాలి చాలా ఎక్కువ — Spray చేయకండి!"
+                : language === "hi"
+                  ? "तेज हवा — Spray मत करें!"
+                  : "High wind — Don't spray chemicals!";
+          }
+
+          setAlert({ icon, message, level });
+          setTimeout(() => {
+            setVisible(true);
+          }, 1500);
+          setTimeout(() => {
+            setVisible(false);
+          }, 9000);
+        })
+        .catch(() => {});
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (p) => load(p.coords.latitude, p.coords.longitude),
+        () => load(17.385, 78.4867),
+      );
+    } else {
+      load(17.385, 78.4867);
+    }
+  }, [language]);
+
+  function dismiss() {
+    setVisible(false);
+    setDismissed(true);
+    sessionStorage.setItem(
+      "weather_alert_dismissed_" + new Date().toDateString(),
+      "1",
+    );
+  }
+
+  if (!alert || !visible || dismissed) return null;
+
+  const bgColor =
+    alert.level === "red"
+      ? "bg-red-600 text-white"
+      : alert.level === "yellow"
+        ? "bg-amber-500 text-white"
+        : "bg-green-600 text-white";
+
+  return (
+    <div
+      className={`fixed top-[60px] left-0 right-0 z-[100] px-3 transition-all duration-500 ${visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}`}
+      data-testid="weather-popup-alert"
+    >
+      <div
+        className={`${bgColor} rounded-xl shadow-2xl p-3 flex items-start gap-3 max-w-md mx-auto`}
+      >
+        <span className="text-2xl shrink-0 mt-0.5">{alert.icon}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide opacity-80">
+            <Cloud size={10} className="inline mr-1" />
+            {language === "te"
+              ? "వాతావరణ హెచ్చరిక"
+              : language === "hi"
+                ? "मौसम चेतावनी"
+                : "Weather Alert"}
+          </p>
+          <p className="text-sm font-medium leading-snug mt-0.5">
+            {alert.message}
+          </p>
+        </div>
+        <button
+          onClick={dismiss}
+          className="shrink-0 opacity-80 hover:opacity-100 p-1"
+          data-testid="button-dismiss-alert"
+        >
+          <X size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Home({ language }: HomeProps) {
   const tx = useTranslation(language);
 
@@ -86,6 +239,18 @@ export default function Home({ language }: HomeProps) {
       color: "bg-purple-500",
       emoji: "🤖",
     },
+    {
+      path: "/weather",
+      icon: Cloud,
+      label:
+        language === "te"
+          ? "వాతావరణం"
+          : language === "hi"
+            ? "मौसम"
+            : "Weather",
+      color: "bg-sky-500",
+      emoji: "🌤️",
+    },
   ];
 
   const lastCheckin = checkins?.[0];
@@ -93,6 +258,9 @@ export default function Home({ language }: HomeProps) {
 
   return (
     <div className="space-y-5">
+      {/* YouTube-style weather popup */}
+      <WeatherPopupAlert language={language} />
+
       {/* Hero */}
       <div className="bg-gradient-to-br from-primary/90 to-primary rounded-xl p-5 text-white shadow-lg">
         <div className="flex items-center gap-3 mb-2">
@@ -108,9 +276,9 @@ export default function Home({ language }: HomeProps) {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions — 2+3 grid */}
       <div className="grid grid-cols-2 gap-3">
-        {quickActions.map(({ path, emoji, label }) => (
+        {quickActions.slice(0, 4).map(({ path, emoji, label }) => (
           <Link key={path} href={path}>
             <Card className="cursor-pointer hover:shadow-md transition-shadow active:scale-95">
               <CardContent className="p-4 flex flex-col items-center gap-2">
@@ -123,6 +291,9 @@ export default function Home({ language }: HomeProps) {
           </Link>
         ))}
       </div>
+
+      {/* Weather mini card */}
+      <WeatherMiniCard language={language} />
 
       {/* Last Health Status */}
       {lastCheckin && (

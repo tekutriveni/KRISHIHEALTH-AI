@@ -500,6 +500,7 @@ export default function Health({ language }: HealthProps) {
   const [farmerName, setFarmerName] = useState("");
   const [familyPhone, setFamilyPhone] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const session = getCurrentSession();
   const questions = getQuestionsForSession(session.type, language);
@@ -557,6 +558,7 @@ export default function Health({ language }: HealthProps) {
     setInjuryPreview(null);
     setInjuryResult(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
   }
 
   const severityConfig: Record<string, { bg: string; color: string; label: string; emoji: string }> = {
@@ -723,29 +725,51 @@ export default function Health({ language }: HealthProps) {
                 </div>
               </div>
 
+              {/* Hidden file inputs */}
               <input
                 type="file"
-                ref={fileInputRef}
+                ref={cameraInputRef}
                 accept="image/*"
                 capture="environment"
                 className="hidden"
                 onChange={handleImageSelect}
               />
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageSelect}
+              />
 
               {!injuryPreview ? (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full border-2 border-dashed border-orange-300 rounded-xl p-6 text-center hover:border-orange-500 transition-colors bg-orange-50 dark:bg-orange-950/20"
-                  data-testid="button-upload-injury"
-                >
-                  <Camera size={32} className="mx-auto text-orange-400 mb-2" />
-                  <p className="text-sm font-medium text-orange-600">
-                    {language === "te" ? "గాయం ఫోటో తీయండి / అప్‌లోడ్ చేయండి" : language === "hi" ? "चोट की फ़ोटो लें / अपलोड करें" : "Take / Upload Injury Photo"}
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="border-2 border-orange-300 rounded-xl p-4 text-center hover:border-orange-500 active:scale-95 transition-all bg-orange-50 dark:bg-orange-950/20"
+                      data-testid="button-take-photo"
+                    >
+                      <Camera size={28} className="mx-auto text-orange-500 mb-1" />
+                      <p className="text-xs font-semibold text-orange-600">
+                        {language === "te" ? "📷 ఫోటో తీయండి" : language === "hi" ? "📷 फोटो लें" : "📷 Take Photo"}
+                      </p>
+                    </button>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-blue-300 rounded-xl p-4 text-center hover:border-blue-500 active:scale-95 transition-all bg-blue-50 dark:bg-blue-950/20"
+                      data-testid="button-upload-gallery"
+                    >
+                      <span className="text-2xl block mb-1">🖼️</span>
+                      <p className="text-xs font-semibold text-blue-600">
+                        {language === "te" ? "గ్యాలరీ నుండి" : language === "hi" ? "गैलरी से चुनें" : "From Gallery"}
+                      </p>
+                    </button>
+                  </div>
+                  <p className="text-xs text-center text-muted-foreground">
+                    {language === "te" ? "గాయం ఫోటో తీసి AI విశ్లేషణ పొందండి" : language === "hi" ? "चोट की फोटो से AI विश्लेषण पाएं" : "AI will analyze your injury photo"}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {language === "te" ? "AI స్వయంగా విశ్లేషిస్తుంది" : language === "hi" ? "AI खुद विश्लेषण करेगा" : "AI will analyze automatically"}
-                  </p>
-                </button>
+                </div>
               ) : (
                 <div className="space-y-3">
                   <div className="relative rounded-xl overflow-hidden">
@@ -815,10 +839,10 @@ export default function Health({ language }: HealthProps) {
                   <div className="flex items-center gap-3">
                     <span className="text-3xl">{cfg.emoji}</span>
                     <div>
-                      <p className={`font-bold ${cfg.color}`}>
-                        {language === "te" ? "తీవ్రత: " : language === "hi" ? "गंभीरता: " : "Severity: "}
-                        <Badge variant="outline" className={`ml-1 ${cfg.color}`}>{cfg.label}</Badge>
-                      </p>
+                      <div className={`font-bold ${cfg.color} flex items-center gap-1 flex-wrap`}>
+                        <span>{language === "te" ? "తీవ్రత:" : language === "hi" ? "गंभीरता:" : "Severity:"}</span>
+                        <Badge variant="outline" className={`${cfg.color}`}>{cfg.label}</Badge>
+                      </div>
                       <p className="text-sm font-medium mt-0.5">{injuryResult.woundType}</p>
                     </div>
                   </div>
