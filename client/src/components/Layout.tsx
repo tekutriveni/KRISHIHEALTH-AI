@@ -7,6 +7,7 @@ import {
   MessageSquare,
   Bell,
   Cloud,
+  Sprout,
 } from "lucide-react";
 import { LANGUAGES, useTranslation } from "@/lib/language";
 import type { Language } from "@/lib/language";
@@ -40,6 +41,12 @@ export function Layout({ children, language, setLanguage }: LayoutProps) {
       icon: Cloud,
       label:
         language === "te" ? "వాతావరణం" : language === "hi" ? "मौसम" : "Weather",
+    },
+    {
+      path: "/farm",
+      icon: Sprout,
+      label:
+        language === "te" ? "వ్యవసాయం" : language === "hi" ? "कृषि" : "Farm",
     },
   ];
 
@@ -81,13 +88,16 @@ export function Layout({ children, language, setLanguage }: LayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 pb-24 px-4 py-4 max-w-2xl mx-auto w-full">
+      <main className="flex-1 pb-28 px-4 py-4 max-w-2xl mx-auto w-full">
         {children}
       </main>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation — scrollable */}
       <nav className="fixed bottom-0 left-0 right-0 bg-sidebar border-t border-sidebar-border z-50">
-        <div className="flex items-stretch max-w-2xl mx-auto">
+        <div
+          className="flex items-stretch max-w-2xl mx-auto overflow-x-auto"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           {navItems.map(({ path, icon: Icon, label }) => {
             const isActive =
               location === path || (path !== "/" && location.startsWith(path));
@@ -95,7 +105,7 @@ export function Layout({ children, language, setLanguage }: LayoutProps) {
               <Link
                 key={path}
                 href={path}
-                className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors ${
+                className={`flex-shrink-0 min-w-[60px] flex flex-col items-center justify-center py-2 px-1 gap-0.5 transition-colors ${
                   isActive
                     ? "text-sidebar-primary bg-sidebar-accent"
                     : "text-sidebar-foreground opacity-70 hover:opacity-100 hover:bg-sidebar-accent"
@@ -103,7 +113,7 @@ export function Layout({ children, language, setLanguage }: LayoutProps) {
                 data-testid={`nav-${path.replace("/", "") || "home"}`}
               >
                 <Icon size={20} />
-                <span className="text-[10px] leading-tight text-center font-medium">
+                <span className="text-[9px] leading-tight text-center font-medium">
                   {label}
                 </span>
               </Link>

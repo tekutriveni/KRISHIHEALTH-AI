@@ -13,6 +13,7 @@ import {
   XCircle,
   X,
   Cloud,
+  Sprout,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +57,8 @@ function WeatherPopupAlert({ language }: { language: Language }) {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    const dismissed_key = "weather_alert_dismissed_" + new Date().toDateString();
+    const dismissed_key =
+      "weather_alert_dismissed_" + new Date().toDateString();
     if (sessionStorage.getItem(dismissed_key)) return;
 
     const load = (lat: number, lon: number) => {
@@ -243,13 +245,21 @@ export default function Home({ language }: HomeProps) {
       path: "/weather",
       icon: Cloud,
       label:
-        language === "te"
-          ? "వాతావరణం"
-          : language === "hi"
-            ? "मौसम"
-            : "Weather",
+        language === "te" ? "వాతావరణం" : language === "hi" ? "मौसम" : "Weather",
       color: "bg-sky-500",
       emoji: "🌤️",
+    },
+    {
+      path: "/farm",
+      icon: Sprout,
+      label:
+        language === "te"
+          ? "వ్యవసాయ గైడ్"
+          : language === "hi"
+            ? "कृषि गाइड"
+            : "Farm Guide",
+      color: "bg-green-600",
+      emoji: "🌱",
     },
   ];
 
@@ -277,13 +287,13 @@ export default function Home({ language }: HomeProps) {
       </div>
 
       {/* Quick Actions — 2+3 grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {quickActions.slice(0, 4).map(({ path, emoji, label }) => (
+      <div className="grid grid-cols-3 gap-3">
+        {quickActions.map(({ path, emoji, label }) => (
           <Link key={path} href={path}>
             <Card className="cursor-pointer hover:shadow-md transition-shadow active:scale-95">
-              <CardContent className="p-4 flex flex-col items-center gap-2">
-                <span className="text-3xl">{emoji}</span>
-                <span className="text-sm font-semibold text-center leading-tight">
+              <CardContent className="p-3 flex flex-col items-center gap-1">
+                <span className="text-2xl">{emoji}</span>
+                <span className="text-xs font-semibold text-center leading-tight">
                   {label}
                 </span>
               </CardContent>

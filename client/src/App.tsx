@@ -13,6 +13,7 @@ import Chat from "@/pages/chat";
 import Alerts from "@/pages/alerts";
 import NotFound from "@/pages/not-found";
 import Weather from "@/pages/weather";
+import Farm from "@/pages/farm";
 function Router() {
   const { language, setLanguage } = useLanguage();
 
@@ -38,6 +39,7 @@ function Router() {
           path="/weather"
           component={() => <Weather language={language} />}
         />
+        <Route path="/farm" component={() => <Farm language={language} />} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
