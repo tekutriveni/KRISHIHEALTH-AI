@@ -1,10 +1,20 @@
-import { pgTable, text, varchar, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  varchar,
+  serial,
+  integer,
+  timestamp,
+  boolean,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
 });
@@ -23,10 +33,14 @@ export const healthCheckins = pgTable("health_checkins", {
   answers: text("answers").notNull(), // JSON string of Q&A
   aiAdvice: text("ai_advice").notNull(),
   status: text("status").notNull().default("green"), // green, yellow, red
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
 });
 
-export const insertHealthCheckinSchema = createInsertSchema(healthCheckins).omit({
+export const insertHealthCheckinSchema = createInsertSchema(
+  healthCheckins,
+).omit({
   id: true,
   createdAt: true,
 });
@@ -43,14 +57,20 @@ export const diseaseDetections = pgTable("disease_detections", {
   spreadInfo: text("spread_info"),
   language: text("language").notNull().default("en"),
   neighborAlerted: boolean("neighbor_alerted").default(false),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
 });
 
-export const insertDiseaseDetectionSchema = createInsertSchema(diseaseDetections).omit({
+export const insertDiseaseDetectionSchema = createInsertSchema(
+  diseaseDetections,
+).omit({
   id: true,
   createdAt: true,
 });
-export type InsertDiseaseDetection = z.infer<typeof insertDiseaseDetectionSchema>;
+export type InsertDiseaseDetection = z.infer<
+  typeof insertDiseaseDetectionSchema
+>;
 export type DiseaseDetection = typeof diseaseDetections.$inferSelect;
 
 export const smsAlerts = pgTable("sms_alerts", {
@@ -59,7 +79,9 @@ export const smsAlerts = pgTable("sms_alerts", {
   message: text("message").notNull(),
   type: text("type").notNull(), // disease, health, mandi
   status: text("status").notNull().default("sent"),
-  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
 });
 
 export const insertSmsAlertSchema = createInsertSchema(smsAlerts).omit({
@@ -80,7 +102,9 @@ export const mandiPrices = pgTable("mandi_prices", {
   market: text("market").notNull(),
   state: text("state").notNull(),
   date: text("date").notNull(),
-  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  updatedAt: timestamp("updated_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
 });
 
 export const insertMandiPriceSchema = createInsertSchema(mandiPrices).omit({
@@ -89,3 +113,64 @@ export const insertMandiPriceSchema = createInsertSchema(mandiPrices).omit({
 });
 export type InsertMandiPrice = z.infer<typeof insertMandiPriceSchema>;
 export type MandiPrice = typeof mandiPrices.$inferSelect;
+
+// ── Rice Mill Slot Booking ─────────────────────────────────────
+
+export const mills = pgTable("mills", {
+  id: serial("id").primaryKey(),
+  ownerName: text("owner_name").notNull(),
+  phone: text("phone").notNull(),
+  millName: text("mill_name").notNull(),
+  location: text("location").notNull(),
+  district: text("district").notNull(),
+  state: text("state").notNull().default("Telangana"),
+  capacity: text("capacity").notNull().default("100"),
+  password: text("password").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export const millSlots = pgTable("mill_slots", {
+  id: serial("id").primaryKey(),
+  millId: integer("mill_id").notNull(),
+  millName: text("mill_name").notNull(),
+  date: text("date").notNull(),
+  timeStart: text("time_start").notNull(),
+  timeEnd: text("time_end").notNull(),
+  totalCapacity: integer("total_capacity").notNull().default(10),
+  bookedCount: integer("booked_count").notNull().default(0),
+  pricePerQuintal: text("price_per_quintal").notNull().default("0"),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export const millBookings = pgTable("mill_bookings", {
+  id: serial("id").primaryKey(),
+  slotId: integer("slot_id").notNull(),
+  millId: integer("mill_id").notNull(),
+  millName: text("mill_name").notNull(),
+  millPhone: text("mill_phone").notNull(),
+  date: text("date").notNull(),
+  timeStart: text("time_start").notNull(),
+  timeEnd: text("time_end").notNull(),
+  farmerName: text("farmer_name").notNull(),
+  farmerPhone: text("farmer_phone").notNull(),
+  village: text("village").notNull(),
+  quantity: text("quantity").notNull(),
+  tokenNumber: integer("token_number").notNull(),
+  status: text("status").notNull().default("confirmed"),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export type Mill = typeof mills.$inferSelect;
+export type InsertMill = typeof mills.$inferInsert;
+export type MillSlot = typeof millSlots.$inferSelect;
+export type InsertMillSlot = typeof millSlots.$inferInsert;
+export type MillBooking = typeof millBookings.$inferSelect;
+export type InsertMillBooking = typeof millBookings.$inferInsert;

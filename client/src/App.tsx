@@ -14,9 +14,12 @@ import Alerts from "@/pages/alerts";
 import NotFound from "@/pages/not-found";
 import Weather from "@/pages/weather";
 import Farm from "@/pages/farm";
+import Market from "@/pages/market";
+import EquipmentPage from "@/pages/equipment";
+import MillBook from "@/pages/millbook";
+
 function Router() {
   const { language, setLanguage } = useLanguage();
-
   return (
     <Layout language={language} setLanguage={setLanguage}>
       <Switch>
@@ -40,6 +43,18 @@ function Router() {
           component={() => <Weather language={language} />}
         />
         <Route path="/farm" component={() => <Farm language={language} />} />
+        <Route
+          path="/market"
+          component={() => <Market language={language} />}
+        />
+        <Route
+          path="/equipment"
+          component={() => <EquipmentPage language={language} />}
+        />
+        <Route
+          path="/millbook"
+          component={() => <MillBook language={language} />}
+        />
         <Route component={NotFound} />
       </Switch>
     </Layout>

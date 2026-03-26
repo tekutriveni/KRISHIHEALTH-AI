@@ -8,6 +8,9 @@ import {
   Bell,
   Cloud,
   Sprout,
+  ShoppingBag,
+  Tractor,
+  Factory,
 } from "lucide-react";
 import { LANGUAGES, useTranslation } from "@/lib/language";
 import type { Language } from "@/lib/language";
@@ -47,6 +50,32 @@ export function Layout({ children, language, setLanguage }: LayoutProps) {
       icon: Sprout,
       label:
         language === "te" ? "వ్యవసాయం" : language === "hi" ? "कृषि" : "Farm",
+    },
+    {
+      path: "/market",
+      icon: ShoppingBag,
+      label:
+        language === "te" ? "మార్కెట్" : language === "hi" ? "बाजार" : "Market",
+    },
+    {
+      path: "/equipment",
+      icon: Tractor,
+      label:
+        language === "te"
+          ? "పరికరాలు"
+          : language === "hi"
+            ? "उपकरण"
+            : "Equipment",
+    },
+    {
+      path: "/millbook",
+      icon: Factory,
+      label:
+        language === "te"
+          ? "మిల్ బుకింగ్"
+          : language === "hi"
+            ? "मिल बुकिंग"
+            : "Mill Book",
     },
   ];
 
