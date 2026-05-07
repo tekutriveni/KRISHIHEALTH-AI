@@ -36,6 +36,7 @@ import {
   mills,
   millSlots,
   millBookings,
+  farmers,
 } from "@shared/schema";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -75,7 +76,7 @@ export interface IStorage {
   getMillBookings(): Promise<MillBooking[]>;
   getMillBookingsBySlot(slotId: number): Promise<MillBooking[]>;
   getMillBookingsByFarmer(phone: string): Promise<MillBooking[]>;
-  createMillBooking(data: InsertMillBooking): Promise<MillBooking>;
+  createMillBooking(data: InsertMillBooking): Promise<MillBooking>;  
 }
 
 export class DbStorage implements IStorage {
@@ -245,9 +246,18 @@ export class DbStorage implements IStorage {
       .orderBy(desc(millBookings.createdAt));
   }
   async createMillBooking(data: InsertMillBooking): Promise<MillBooking> {
+    getFarmerByPhone(phone: string): Promise<any>;
+    createFarmer(data: any): Promise<any>;
     const result = await db.insert(millBookings).values(data).returning();
     return result[0];
   }
 }
-
+async getFarmerByPhone(phone: string): Promise<any> {
+  const result = await db.select().from(farmers).where(eq(farmers.phone, phone));
+  return result[0];
+}
+async createFarmer(data: any): Promise<any> {
+  const result = await db.insert(farmers).values(data).returning();
+  return result[0];
+}
 export const storage = new DbStorage();

@@ -10,7 +10,6 @@ import Disease from "@/pages/disease";
 import Health from "@/pages/health";
 import Mandi from "@/pages/mandi";
 import Chat from "@/pages/chat";
-import Alerts from "@/pages/alerts";
 import NotFound from "@/pages/not-found";
 import Weather from "@/pages/weather";
 import Farm from "@/pages/farm";
@@ -34,10 +33,6 @@ function Router() {
         />
         <Route path="/mandi" component={() => <Mandi language={language} />} />
         <Route path="/chat" component={() => <Chat language={language} />} />
-        <Route
-          path="/alerts"
-          component={() => <Alerts language={language} />}
-        />
         <Route
           path="/weather"
           component={() => <Weather language={language} />}

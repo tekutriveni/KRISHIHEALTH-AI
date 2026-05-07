@@ -6,7 +6,6 @@ import {
   HeartPulse,
   TrendingUp,
   MessageSquare,
-  Bell,
   Clock,
   CheckCircle2,
   AlertTriangle,
@@ -305,6 +304,53 @@ export default function Home({ language }: HomeProps) {
       {/* Weather mini card */}
       <WeatherMiniCard language={language} />
 
+      {/* 3 New Feature Modules */}
+      <div className="grid grid-cols-3 gap-2">
+        <Link href="/market">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow active:scale-95 border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+            <CardContent className="p-3 flex flex-col items-center gap-1">
+              <span className="text-2xl">🛒</span>
+              <span className="text-[11px] font-bold text-center leading-tight text-orange-700 dark:text-orange-300">
+                {language === "te"
+                  ? "పంట అమ్మండి"
+                  : language === "hi"
+                    ? "फसल बेचें"
+                    : "Sell Crops"}
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/equipment">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow active:scale-95 border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
+            <CardContent className="p-3 flex flex-col items-center gap-1">
+              <span className="text-2xl">🚜</span>
+              <span className="text-[11px] font-bold text-center leading-tight text-yellow-700 dark:text-yellow-300">
+                {language === "te"
+                  ? "పరికరాలు"
+                  : language === "hi"
+                    ? "उपकरण किराया"
+                    : "Rent Equipment"}
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/millbook">
+          <Card className="cursor-pointer hover:shadow-md transition-shadow active:scale-95 border-stone-200 bg-stone-50 dark:bg-stone-950/20">
+            <CardContent className="p-3 flex flex-col items-center gap-1">
+              <span className="text-2xl">🏭</span>
+              <span className="text-[11px] font-bold text-center leading-tight text-stone-700 dark:text-stone-300">
+                {language === "te"
+                  ? "మిల్ స్లాట్"
+                  : language === "hi"
+                    ? "मिल बुकिंग"
+                    : "Mill Slot"}
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
       {/* Last Health Status */}
       {lastCheckin && (
         <Card>
@@ -407,19 +453,6 @@ export default function Home({ language }: HomeProps) {
           </CardContent>
         </Card>
       )}
-
-      {/* Alert Banner */}
-      <Link href="/alerts">
-        <Card className="cursor-pointer border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800 hover:shadow-md transition-shadow">
-          <CardContent className="p-3 flex items-center gap-3">
-            <Bell className="text-orange-500" size={20} />
-            <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
-              {tx.smsAlerts}
-            </span>
-            <span className="ml-auto text-orange-500">→</span>
-          </CardContent>
-        </Card>
-      </Link>
     </div>
   );
 }

@@ -174,3 +174,76 @@ export type MillSlot = typeof millSlots.$inferSelect;
 export type InsertMillSlot = typeof millSlots.$inferInsert;
 export type MillBooking = typeof millBookings.$inferSelect;
 export type InsertMillBooking = typeof millBookings.$inferInsert;
+// ── Market Listings ───────────────────────────────────────────
+export const marketListings = pgTable("market_listings", {
+  id: serial("id").primaryKey(),
+  farmerName: text("farmer_name").notNull(),
+  farmerPhone: text("farmer_phone").notNull(),
+  cropName: text("crop_name").notNull(),
+  quantity: text("quantity").notNull(),
+  unit: text("unit").notNull().default("kg"),
+  pricePerUnit: text("price_per_unit").notNull(),
+  location: text("location").notNull(),
+  description: text("description").default(""),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export type MarketListing = typeof marketListings.$inferSelect;
+export type InsertMarketListing = typeof marketListings.$inferInsert;
+
+// ── Equipment ─────────────────────────────────────────────────
+export const equipment = pgTable("equipment", {
+  id: serial("id").primaryKey(),
+  ownerName: text("owner_name").notNull(),
+  ownerPhone: text("owner_phone").notNull(),
+  equipmentName: text("equipment_name").notNull(),
+  type: text("type").notNull().default("tractor"),
+  pricePerDay: text("price_per_day").notNull(),
+  location: text("location").notNull(),
+  available: boolean("available").notNull().default(true),
+  description: text("description").default(""),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export type Equipment = typeof equipment.$inferSelect;
+export type InsertEquipment = typeof equipment.$inferInsert;
+
+// ── Equipment Bookings ────────────────────────────────────────
+export const equipmentBookings = pgTable("equipment_bookings", {
+  id: serial("id").primaryKey(),
+  equipmentId: integer("equipment_id").notNull(),
+  equipmentName: text("equipment_name").notNull(),
+  ownerPhone: text("owner_phone").notNull(),
+  farmerName: text("farmer_name").notNull(),
+  farmerPhone: text("farmer_phone").notNull(),
+  date: text("date").notNull(),
+  days: text("days").notNull(),
+  totalPrice: text("total_price").notNull(),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export type EquipmentBooking = typeof equipmentBookings.$inferSelect;
+export type InsertEquipmentBooking = typeof equipmentBookings.$inferInsert;
+// ── Farmers ───────────────────────────────────────────────────
+export const farmers = pgTable("farmers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  phone: text("phone").notNull().unique(),
+  village: text("village").notNull().default(""),
+  cropType: text("crop_type").notNull(),
+  quantity: text("quantity").notNull(),
+  quantityUnit: text("quantity_unit").notNull().default("quintal"),
+  password: text("password").notNull().default(""),
+  createdAt: timestamp("created_at")
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export type Farmer = typeof farmers.$inferSelect;
+export type InsertFarmer = typeof farmers.$inferInsert;

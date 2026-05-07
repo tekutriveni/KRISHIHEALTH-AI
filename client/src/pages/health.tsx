@@ -508,103 +508,47 @@ export default function Health({ language }: HealthProps) {
 
   const session = getCurrentSession();
   const questions = getQuestionsForSession(session.type, language);
-
   const sessionEmoji: Record<string, string> = {
     morning: "🌅",
     noon: "☀️",
     evening: "🌆",
-    weekly: "📅",
+    weekly: "📋", // 📅 బదులు 📋 వాడండి
   };
 
-  // ── SMS send function ────────────────────────────────────────────────────────
-  async function sendInjurySMS(phone: string, name: string, res: any) {
-    if (!phone || phone.length < 10) {
-      toast({
-        title:
-          language === "te"
-            ? "ఫోన్ నంబర్ తప్పు"
-            : language === "hi"
-              ? "गलत नंबर"
-              : "Invalid phone",
-        description:
-          language === "te"
-            ? "సరైన నంబర్ ఇవ్వండి"
-            : language === "hi"
-              ? "सही नंबर दें"
-              : "Enter a valid 10-digit number",
-        variant: "destructive",
-      });
-      return;
-    }
-    setSmsSending(true);
-    try {
-      const severityLabel =
-        res.severity === "critical"
-          ? "🆘 CRITICAL"
-          : res.severity === "severe"
-            ? "🚨 Severe"
-            : res.severity === "moderate"
-              ? "⚠️ Moderate"
-              : "✅ Mild";
-      const message =
-        `KrishiHealth AI Alert!\n` +
-        `Farmer: ${name || "Unknown"}\n` +
-        `Injury: ${res.woundType || "Wound detected"}\n` +
-        `Severity: ${severityLabel}\n` +
-        (res.timeToHeal ? `Healing: ${res.timeToHeal}\n` : "") +
-        (res.englishMedicine ? `Medicine: ${res.englishMedicine}\n` : "") +
-        (res.severity === "severe" || res.severity === "critical"
-          ? `⚠️ Please help immediately! Call 108 if needed.`
-          : `Please check on them soon.`);
+  function shareInjuryWhatsApp(name: string, res: any) {
+    const severityLabel =
+      res.severity === "critical"
+        ? "🆘 CRITICAL"
+        : res.severity === "severe"
+          ? "🚨 Severe"
+          : res.severity === "moderate"
+            ? "⚠️ Moderate"
+            : "✅ Mild";
 
-      const apiRes = await fetch("/api/sms/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phoneNumber: phone,
-          message,
-          type: "injury_alert",
-        }),
-      });
+    const msg =
+      `🌾 *KrishiHealth AI — Injury Alert!*\n\n` +
+      `👨‍🌾 *Farmer:* ${name || "Unknown"}\n` +
+      `🩹 *Injury:* ${res.woundType || "Wound detected"}\n` +
+      `⚠️ *Severity:* ${severityLabel}\n\n` +
+      (res.naturalRemedies?.length > 0
+        ? `🌿 *Natural Remedies:*\n${res.naturalRemedies.map((r: string, i: number) => `${i + 1}. ${r}`).join("\n")}\n\n`
+        : "") +
+      (res.englishMedicine ? `💊 *Medicine:* ${res.englishMedicine}\n` : "") +
+      (res.timeToHeal ? `⏰ *Heal Time:* ${res.timeToHeal}\n` : "") +
+      (res.severity === "severe" || res.severity === "critical"
+        ? `\n🆘 *Please help immediately! Call 108 if needed.*`
+        : `\nPlease check on them soon.`) +
+      `\n\n🤖 *KrishiHealth AI*`;
+    const cleanPhone =
+      name && res
+        ? familyPhone.replace(/\+91/g, "").replace(/\s/g, "").replace(/-/g, "")
+        : "";
+    const url = cleanPhone
+      ? `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
 
-      if (apiRes.ok) {
-        setSmsSent(true);
-        toast({
-          title:
-            language === "te"
-              ? "SMS పంపబడింది! ✅"
-              : language === "hi"
-                ? "SMS भेजा गया! ✅"
-                : "SMS Sent! ✅",
-          description:
-            language === "te"
-              ? `${phone} కి గాయం వివరాలు పంపబడ్డాయి`
-              : language === "hi"
-                ? `${phone} को चोट की जानकारी भेजी गई`
-                : `Injury details sent to ${phone}`,
-        });
-      } else {
-        throw new Error("SMS failed");
-      }
-    } catch {
-      toast({
-        title:
-          language === "te"
-            ? "SMS విఫలమైంది"
-            : language === "hi"
-              ? "SMS असफल"
-              : "SMS Failed",
-        description:
-          language === "te"
-            ? "మళ్ళీ ప్రయత్నించండి"
-            : language === "hi"
-              ? "दोबारा कोशिश करें"
-              : "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setSmsSending(false);
-    }
+    window.open(url, "_blank");
+    setSmsSent(true);
   }
 
   // ── Injury detection mutation ────────────────────────────────────────────────
@@ -1058,77 +1002,44 @@ export default function Health({ language }: HealthProps) {
                       </div>
                     </div>
                   </div>
-
-                  {/* ── SMS SEND SECTION (for ALL severities) ── */}
-                  <Card className="border-blue-300 bg-blue-50 dark:bg-blue-950/20">
+                  <Card className="border-green-300 bg-green-50 dark:bg-green-950/20">
                     <CardContent className="p-4 space-y-3">
-                      <p className="text-sm font-semibold text-blue-700">
-                        📱{" "}
+                      <p className="text-sm font-semibold text-green-700">
+                        📤{" "}
                         {language === "te"
-                          ? "గాయం వివరాలు SMS ద్వారా పంపండి"
+                          ? "WhatsApp లో Share చేయండి"
                           : language === "hi"
-                            ? "चोट की जानकारी SMS से भेजें"
-                            : "Send Injury Details via SMS"}
+                            ? "WhatsApp पर Share करें"
+                            : "Share on WhatsApp"}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {language === "te"
-                          ? "పేరు మరియు ఫోన్ నంబర్ పై ఇచ్చారు — SMS లో గాయం పూర్తి వివరాలు వెళ్తాయి"
+                          ? "గాయం వివరాలు WhatsApp లో family/friends కి పంపండి"
                           : language === "hi"
-                            ? "ऊपर दिए नाम और नंबर पर SMS जाएगा"
-                            : "Injury details will be sent to the phone number entered above"}
+                            ? "चोट की जानकारी WhatsApp पर परिवार को भेजें"
+                            : "Send injury details to family/friends via WhatsApp"}
                       </p>
-
-                      {/* Show entered phone or allow editing */}
-                      <div className="flex gap-2">
-                        <Input
-                          value={familyPhone}
-                          onChange={(e) => {
-                            setFamilyPhone(e.target.value);
-                            setSmsSent(false);
-                          }}
-                          placeholder="9876543210"
-                          type="tel"
-                          className="flex-1"
-                        />
-                        <Button
-                          onClick={() =>
-                            sendInjurySMS(familyPhone, farmerName, injuryResult)
-                          }
-                          disabled={smsSending || smsSent || !familyPhone}
-                          className={`shrink-0 ${smsSent ? "bg-green-600 hover:bg-green-600" : "bg-blue-600 hover:bg-blue-700"} text-white`}
-                        >
-                          {smsSending ? (
-                            <span className="animate-spin">⏳</span>
-                          ) : smsSent ? (
-                            <>
-                              <CheckCircle2 size={16} className="mr-1" />
-                              {language === "te"
-                                ? "పంపబడింది"
-                                : language === "hi"
-                                  ? "भेजा गया"
-                                  : "Sent!"}
-                            </>
-                          ) : (
-                            <>
-                              <Send size={16} className="mr-1" />
-                              {language === "te"
-                                ? "SMS పంపు"
-                                : language === "hi"
-                                  ? "SMS भेजें"
-                                  : "Send SMS"}
-                            </>
-                          )}
-                        </Button>
-                      </div>
-
+                      <Button
+                        onClick={() =>
+                          shareInjuryWhatsApp(farmerName, injuryResult)
+                        }
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        📤{" "}
+                        {language === "te"
+                          ? "WhatsApp లో Share చేయండి"
+                          : language === "hi"
+                            ? "WhatsApp पर Share करें"
+                            : "Share on WhatsApp"}
+                      </Button>
                       {smsSent && (
                         <p className="text-xs text-green-700 font-medium">
                           ✅{" "}
                           {language === "te"
-                            ? `${familyPhone} కి గాయం వివరాలు పంపబడ్డాయి!`
+                            ? "WhatsApp తెరుచుకుంది!"
                             : language === "hi"
-                              ? `${familyPhone} को जानकारी भेजी गई!`
-                              : `Injury details sent to ${familyPhone}!`}
+                              ? "WhatsApp खुल गया!"
+                              : "WhatsApp opened!"}
                         </p>
                       )}
                     </CardContent>

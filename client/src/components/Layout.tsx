@@ -5,7 +5,6 @@ import {
   HeartPulse,
   TrendingUp,
   MessageSquare,
-  Bell,
   Cloud,
   Sprout,
   ShoppingBag,
@@ -38,7 +37,6 @@ export function Layout({ children, language, setLanguage }: LayoutProps) {
     { path: "/health", icon: HeartPulse, label: tx.health },
     { path: "/mandi", icon: TrendingUp, label: tx.mandi },
     { path: "/chat", icon: MessageSquare, label: tx.chat },
-    { path: "/alerts", icon: Bell, label: tx.alerts },
     {
       path: "/weather",
       icon: Cloud,
@@ -109,7 +107,7 @@ export function Layout({ children, language, setLanguage }: LayoutProps) {
                 value={l.code}
                 data-testid={`lang-option-${l.code}`}
               >
-                {l.flag} {l.label}
+                {l.flag} {l.native || l.label}
               </SelectItem>
             ))}
           </SelectContent>
