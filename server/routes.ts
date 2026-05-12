@@ -618,6 +618,13 @@ export async function registerRoutes(
 
   app.delete("/api/market/listings/:id", async (req, res) => {
     try {
+      const listings = await storage.getMarketListings();
+      const listing = listings.find(l => l.id === Number(req.params.id));
+      if (!listing) return res.status(404).json({ error: "Listing not found" });
+      const { phone } = req.body;
+      if (!phone || listing.farmerPhone !== phone) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
       await storage.deleteMarketListing(Number(req.params.id));
       res.json({ success: true });
     } catch (err) {

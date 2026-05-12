@@ -150,8 +150,18 @@ export default function Market({ language }: MarketProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      await fetch(`/api/market/listings/${id}`, { method: "DELETE" });
-    },
+		const phone = prompt("మీ phone number enter చేయండి:");
+		if (!phone) return;
+		const res = await fetch(`/api/market/listings/${id}`, {
+		  method: "DELETE",
+		  headers: { "Content-Type": "application/json" },
+		  body: JSON.stringify({ phone })
+		});
+		if (!res.ok) {
+		  const err = await res.json();
+		  alert(err.error === "Not authorized" ? "మీరు ఈ listing delete చేయలేరు!" : "Error occurred");
+		}
+	},
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["/api/market/listings"] }),
   });
