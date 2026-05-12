@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://krishi-health-ai--tekutriveni.replit.app/sitemap.xml
